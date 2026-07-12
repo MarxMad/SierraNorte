@@ -49,7 +49,11 @@ export default function ComunidadVista({
 
       <div className="min-h-0 flex-1 overflow-auto px-6 py-4">
         {operacion.length === 0 ? (
-          <Vacio titulo="Sin paquetes en esta comunidad" icono="mountain" />
+          <Vacio
+            titulo="Sin salidas por operar"
+            sub="Aquí aparecen los tramos en cuanto se reserva un paquete que pasa por esta comunidad. El catálogo por sí solo no genera trabajo."
+            icono="mountain"
+          />
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {operacion.map((t) => {
@@ -83,8 +87,10 @@ export default function ComunidadVista({
                       <span className="font-semibold text-gray-700">{fecha(t.fecha_inicio)}</span>
                     </p>
                     <p className="flex justify-between">
-                      <span>Personas</span>
-                      <span className="font-semibold text-gray-700">{t.pax} pax</span>
+                      <span>Grupo</span>
+                      <span className="font-semibold text-gray-700">
+                        {t.reservas} {t.reservas === 1 ? 'reserva' : 'reservas'} · {t.pax} pax
+                      </span>
                     </p>
                     <p className="flex justify-between">
                       <span>Presupuesto</span>

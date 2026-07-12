@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import type { DetallePaquete } from '@/lib/tipos';
 
 // =====================================================================
 // Server Actions — todas las escrituras pasan por aquí.
@@ -77,6 +78,43 @@ export async function guardarPaquete(datos: Record<string, unknown>): Promise<Re
   revalidatePath('/liquidacion');
   revalidatePath('/calendario');
   return fallo(error);
+}
+
+// Un paquete no es sólo la fila de `paquetes`: son sus comunidades, su
+// itinerario y sus comedores. De ahí sale la Liquidación. Todo se guarda
+// junto, en una transacción (ver 17_paquete_completo.sql).
+export async function guardarPaqueteCompleto(
+  paquete: Record<string, unknown>,
+  comunidades: string[],
+  dias: unknown[],
+  comedores: unknown[]
+): Promise<Resultado> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc('guardar_paquete_completo', {
+    p_paquete: paquete,
+    p_comunidades: comunidades,
+    p_dias: dias,
+    p_comedores: comedores,
+  });
+
+  revalidatePath('/ventas');
+  revalidatePath('/liquidacion');
+  revalidatePath('/calendario');
+  revalidatePath('/comunidades');
+  return fallo(error);
+}
+
+// El detalle completo, para poder editarlo
+export async function cargarPaquete(id: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('v_paquete_detalle')
+    .select('*')
+    .eq('paquete_id', id)
+    .single();
+
+  if (error) return { error: error.message };
+  return { detalle: data as DetallePaquete };
 }
 
 export async function guardarComedor(datos: Record<string, unknown>): Promise<Resultado> {

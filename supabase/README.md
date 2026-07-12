@@ -198,6 +198,69 @@ dentro**, así que el total es lo cobrado y el IVA es la diferencia contra el su
 Sólo entra al cotejo fiscal lo que lleva factura. Lo que no, sigue contando en la caja
 pero no suma IVA por ningún lado — y la pantalla lo dice en voz alta.
 
+## La operación es la que tiene gente (16_operacion_real.sql)
+
+`v_operacion_comunidad` se armaba desde `paquete_comunidades`, que es **catálogo**: cada
+paquete dado de alta le pintaba una tarjeta con su checklist a cada comunidad que toca,
+aunque **nadie hubiera reservado nunca ese tour**. El coordinador de Benito Juárez veía
+decenas de tramos inexistentes y podía "confirmar comedores" de un grupo que no va a llegar.
+
+Un tramo es real cuando hay **al menos una reserva** en ese paquete. Con el seed:
+93 tramos en el catálogo → 17 con reservas.
+
+El checklist se sigue sembrando por trigger al ligar comunidad y paquete (la fila queda
+lista), pero **no se muestra** hasta que llega la primera reserva. Y si el paquete no tiene
+fecha propia, la salida se toma de sus reservas — igual que en el calendario.
+
+## Crear un paquete de verdad (17_paquete_completo.sql)
+
+El formulario de paquete **sólo escribía en `paquetes`**. Nunca tocaba
+`paquete_comunidades`, ni el itinerario, ni los comedores. Un paquete creado desde la app
+no aparecía en Comunidades, no sembraba checklist, y en Liquidación su costo salía casi en
+cero (sólo transporte y anfitrión) — con un **margen falso del 100%**.
+
+`guardar_paquete_completo(p_paquete, p_comunidades, p_dias, p_comedores)` guarda las cuatro
+tablas de un golpe, en una transacción. `v_paquete_detalle` devuelve el paquete con todo su
+detalle para poder editarlo.
+
+**Lo delicado**: la función **no borra y reinserta**. `liquidacion_estado` apunta al uuid
+del item y del comedor, así que reinsertarlos perdería lo ya marcado como liquidado. Lo que
+trae `id` se **actualiza**; sólo se borra lo que el usuario quitó de verdad. Probado: se
+marca un sendero como liquidado, se edita el paquete quitando otro item, y el liquidado
+sobrevive.
+
+Con un paquete de 2 días, 2 comunidades, 4 items y 2 comedores + una reserva de 4 pax:
+los conceptos por persona se multiplican por los pax reales y el margen sale en 44%.
+
+## El paquete es catálogo (18_paquete_catalogo.sql)
+
+El formulario pedía capturar un **status** para el paquete. Pero un paquete es la ficha de
+la experiencia, la que se consulta al reservar. El que avanza de estado es el **grupo que
+sale**, no la ficha.
+
+Ahora el status no se captura: se **deriva de las reservas**.
+
+| Reservas | Status del paquete |
+|---|---|
+| Ninguna | Planeación (nadie va todavía) |
+| Con reservas | El estado **menos avanzado** de sus reservas |
+
+El menos avanzado, no el más: si una reserva sigue en Planeación, la salida no está lista.
+Un trigger `before insert or update` en `paquetes` fuerza el valor, así que **la columna no
+puede mentir** — da igual si escribe el formulario, `guardar_paquete_completo` o un `update`
+a mano.
+
+### Deuda conocida: `paquetes` mezcla catálogo con salida
+
+`fecha_inicio`, `fecha_fin`, `anfitrion_*` y `transporte_*` son datos de **una salida**, no
+del catálogo. Mientras cada paquete tenga una sola salida, funciona. Pero si dos grupos
+hacen el mismo tour en fechas distintas, hoy **comparten una fila de liquidación, un
+checklist y un anfitrión**.
+
+La solución de fondo es una tabla `salidas` (paquete + fechas + status + anfitrión +
+transporte) a la que apunten las reservas. Es un refactor grande: toca reservas,
+liquidación, calendario y comunidades. Se dejó pendiente a propósito.
+
 ## Precios
 
 **Todos los montos están en 0** porque el PDF del catálogo no traía tarifas. Hay que capturar:

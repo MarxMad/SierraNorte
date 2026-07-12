@@ -54,14 +54,16 @@ export default function LiquidacionVista({
   // decide adentro, botón por botón.
   // Las facturas se fueron a Banca → Contabilidad: es donde vive el
   // auxiliar contable, y así no se capturan en dos lugares distintos.
+  // «Por concepto» se fue: era la misma lista que ya se ve al desplegar
+  // cada salida, sólo que aplanada. Tres pestañas, tres preguntas:
+  // qué entró (Cobros), qué sale por salida, y qué le toca a cada pueblo.
   const VISTAS = [
-    { id: 'ventas', label: 'Por venta', icono: 'receipt' },
-    { id: 'concepto', label: 'Por concepto', icono: 'clipboard' },
     {
       id: 'cobros',
       label: `Cobros${cobrosKpis.pendientes ? ` (${cobrosKpis.pendientes})` : ''}`,
       icono: 'card',
     },
+    { id: 'ventas', label: 'Por salida', icono: 'receipt' },
     { id: 'comunidad', label: 'Por comunidad', icono: 'mountain' },
   ];
 
@@ -256,71 +258,6 @@ export default function LiquidacionVista({
               </div>
             )}
           </>
-        )}
-
-        {/* ---------------- POR CONCEPTO ---------------- */}
-        {vista === 'concepto' && (
-          <div className="overflow-auto rounded-xl border border-gray-200 bg-white">
-            <table className="w-full min-w-[1000px] text-sm">
-              <thead className="bg-gray-50 text-left text-[11px] font-bold uppercase text-gray-500">
-                <tr>
-                  <th className="w-10 px-3 py-2.5" />
-                  <th className="px-3 py-2.5">Concepto</th>
-                  <th className="px-3 py-2.5">Tipo</th>
-                  <th className="px-3 py-2.5">Comunidad</th>
-                  <th className="px-3 py-2.5">Salida</th>
-                  <th className="px-3 py-2.5">Monto</th>
-                  <th className="px-3 py-2.5">Pago</th>
-                </tr>
-              </thead>
-              <tbody>
-                {conceptos
-                  .filter((c) => !q || c.concepto.toLowerCase().includes(q) || c.paquete.toLowerCase().includes(q))
-                  .map((c) => (
-                    <tr key={c.origen + c.origen_id} className="border-t border-gray-100 hover:bg-gray-50">
-                      <td className="px-3 py-2.5">
-                        <button
-                          onClick={() => toggle(c)}
-                          disabled={!liquidable}
-                          className="flex items-center justify-center rounded border-2 disabled:cursor-not-allowed"
-                          style={{
-                            width: 18,
-                            height: 18,
-                            borderColor: c.liquidado ? '#16A34A' : '#D1D5DB',
-                            background: c.liquidado ? '#16A34A' : '#fff',
-                          }}
-                        >
-                          {c.liquidado && <Icono n="check" s={11} c="#fff" />}
-                        </button>
-                      </td>
-                      <td
-                        className={`px-3 py-2.5 font-semibold ${
-                          c.liquidado ? 'text-gray-400 line-through' : 'text-gray-800'
-                        }`}
-                      >
-                        {c.concepto}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <Pill texto={c.tipo} color={COLOR_LIQ[c.tipo]} />
-                      </td>
-                      <td className="px-3 py-2.5 text-xs text-gray-600">{c.comunidad ?? '—'}</td>
-                      <td className="px-3 py-2.5 text-xs text-gray-600">{c.paquete}</td>
-                      <td className="px-3 py-2.5 font-extrabold text-gray-900">{dinero(c.monto)}</td>
-                      <td className="px-3 py-2.5">
-                        {c.pago_directo ? (
-                          <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-2 py-0.5 text-[10px] font-extrabold text-amber-800">
-                            <Icono n="utensils" s={11} c="#92400E" />
-                            DIRECTO
-                          </span>
-                        ) : (
-                          <span className="text-xs text-gray-400">Cooperativa</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
         )}
 
         {/* ---------------- POR COMUNIDAD ---------------- */}

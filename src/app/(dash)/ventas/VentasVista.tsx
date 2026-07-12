@@ -11,6 +11,7 @@ import {
   type Paquete,
   type Guia,
   type Perfil,
+  type Comunidad,
   COLOR_DURACION,
   COLOR_STATUS,
   COLOR_METODO,
@@ -33,6 +34,7 @@ export default function VentasVista({
   reservas,
   paquetes,
   guias,
+  comunidades,
 }: {
   perfil: Perfil;
   vista: string;
@@ -40,6 +42,7 @@ export default function VentasVista({
   reservas: Reserva[];
   paquetes: Paquete[];
   guias: Guia[];
+  comunidades: Comunidad[];
 }) {
   const [editandoReserva, setEditandoReserva] = useState<Partial<Reserva> | null>(null);
   const [editandoPaquete, setEditandoPaquete] = useState<Paquete | null>(null);
@@ -424,7 +427,11 @@ export default function VentasVista({
         />
       )}
       {editandoPaquete && (
-        <PaqueteModal paquete={editandoPaquete} onClose={() => setEditandoPaquete(null)} />
+        <PaqueteModal
+          paquete={editandoPaquete}
+          comunidades={comunidades}
+          onClose={() => setEditandoPaquete(null)}
+        />
       )}
     </>
   );

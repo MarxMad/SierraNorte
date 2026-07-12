@@ -254,6 +254,7 @@ export interface OperacionComunidad {
   duracion: Duracion;
   fecha_inicio: string | null;
   status: StatusOperativo;
+  reservas: number; // un tramo sólo existe si tiene reservas
   pax: number;
   checks_total: number;
   checks_ok: number;
@@ -265,6 +266,54 @@ export interface OperacionComunidad {
   presupuesto: number;
   gastado: number;
 }
+
+// ---------------------------------------------------------------------
+// El detalle de un paquete: lo que de verdad alimenta la Liquidación.
+// Sin esto, un paquete nuevo no tiene ni costo ni comunidades.
+// ---------------------------------------------------------------------
+export interface ItemItinerario {
+  id?: string;
+  orden: number;
+  texto: string;
+  tipo: TipoLiquidacion | null; // null = no se liquida (traslados, tiempo libre…)
+  comunidad_id: string | null;
+  monto: number;
+  por_persona: boolean;
+}
+
+export interface DiaItinerario {
+  id?: string;
+  dia: number;
+  recorrido: string;
+  items: ItemItinerario[];
+}
+
+export interface ComedorPaquete {
+  id?: string;
+  dia: number;
+  comunidad_id: string | null;
+  recorrido?: string | null;
+  nombre: string;
+  tipo: TipoComida;
+  monto_por_persona: number;
+}
+
+export interface DetallePaquete {
+  paquete_id: string;
+  comunidades_ids: string[];
+  dias: DiaItinerario[];
+  comedores: ComedorPaquete[];
+}
+
+export const TIPOS_LIQUIDACION: TipoLiquidacion[] = [
+  'Sendero',
+  'Hospedaje',
+  'Actividad',
+  'Taller',
+  'Transporte',
+];
+
+export const TIPOS_COMIDA: TipoComida[] = ['Desayuno', 'Comida', 'Cena', 'Box lunch'];
 
 export interface ItemChecklist {
   id: string;
