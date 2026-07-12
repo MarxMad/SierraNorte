@@ -9,12 +9,13 @@ export default async function VentasPage({
   searchParams: Promise<{ v?: string; q?: string }>;
 }) {
   const perfil = await exigirAcceso('ventas');
-  const { v = 'clientes', q = '' } = await searchParams;
+  const { v = 'panel', q = '' } = await searchParams;
   const supabase = await createClient();
 
   const [{ data: reservas }, { data: paquetes }, { data: guias }, { data: comunidades }] =
     await Promise.all([
-      supabase.from('v_reservas').select('*').order('codigo'),
+      // las más recientes primero: es lo que se está trabajando
+      supabase.from('v_reservas').select('*').order('created_at', { ascending: false }),
       supabase.from('v_paquetes').select('*').order('duracion').order('nombre'),
       supabase.from('guias').select('*').eq('activo', true).order('nombre'),
       // El paquete necesita saber por qué pueblos pasa: de ahí sale la Liquidación

@@ -2,11 +2,14 @@
 
 import { useState, useTransition } from 'react';
 import { Modal, Campo, inputCls, BtnPrimario, BtnGhost, Pill, Icono } from '@/components/ui';
-import { guardarReserva } from '@/app/acciones';
+import { guardarReservaConReparto } from '@/app/acciones';
 import {
   type Reserva,
   type Paquete,
   type Guia,
+  type LineaPago,
+  type MetodoPago,
+  type Plataforma,
   METODOS,
   PLATAFORMAS,
   STATUSES,
@@ -15,6 +18,7 @@ import {
   COLOR_PLATAFORMA,
   COLOR_STATUS,
   colorPagado,
+  dinero,
   hexA,
 } from '@/lib/tipos';
 
@@ -42,35 +46,100 @@ export default function ReservaModal({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  // El pago dividido: 40% en efectivo y 60% por transferencia, por ejemplo.
+  // Vacío = un solo cobro por el total, con el método de arriba.
+  const [dividido, setDividido] = useState(false);
+  const [reparto, setReparto] = useState<LineaPago[]>([]);
+
   const set = (patch: Partial<Reserva>) => setD((v) => ({ ...v, ...patch }));
   const pkg = paquetes.find((p) => p.id === d.paquete_id);
+
+  const precio = Number(d.precio ?? 0);
+  const sumaReparto = reparto.reduce((a, l) => a + (Number(l.monto) || 0), 0);
+  const falta = Math.round((precio - sumaReparto) * 100) / 100;
+
+  const activarDividido = () => {
+    setDividido(true);
+    // Arranca con el método elegido arriba y la mitad del precio
+    setReparto([
+      {
+        metodo_pago: d.metodo_pago ?? 'Efectivo',
+        plataforma: d.metodo_pago === 'Transfer/Tarjeta' ? (d.plataforma ?? 'WeTravel') : null,
+        monto: Math.round((precio / 2) * 100) / 100,
+      },
+      {
+        metodo_pago: d.metodo_pago === 'Efectivo' ? 'Transfer/Tarjeta' : 'Efectivo',
+        plataforma: d.metodo_pago === 'Efectivo' ? 'WeTravel' : null,
+        monto: precio - Math.round((precio / 2) * 100) / 100,
+      },
+    ]);
+  };
+
+  const setLinea = (i: number, patch: Partial<LineaPago>) =>
+    setReparto((p) => p.map((l, j) => (j === i ? { ...l, ...patch } : l)));
+
+  // Repartir por porcentaje es lo que la gente tiene en la cabeza
+  const setPct = (i: number, pct: number) =>
+    setLinea(i, { monto: Math.round(precio * (pct / 100) * 100) / 100 });
+
+  const pctDe = (l: LineaPago) => (precio > 0 ? Math.round((Number(l.monto) / precio) * 100) : 0);
 
   const guardar = () => {
     if (!d.nombre?.trim()) return setError('Falta el nombre del cliente.');
     if (!d.paquete_id) return setError('Selecciona un paquete.');
 
+    if (dividido) {
+      if (reparto.length < 2) return setError('Un pago dividido necesita al menos dos métodos.');
+      if (Math.abs(falta) > 0.01)
+        return setError(
+          falta > 0
+            ? `Faltan ${dinero(falta)} por repartir: el reparto tiene que sumar el precio.`
+            : `El reparto se pasa por ${dinero(-falta)} del precio.`
+        );
+    }
+
     setError(null);
     startTransition(async () => {
-      const res = await guardarReserva({
-        id: d.id,
-        codigo: d.codigo,
-        nombre: d.nombre,
-        email: d.email || null,
-        telefono: d.telefono || null,
-        paquete_id: d.paquete_id,
-        personas: d.personas,
-        ninos: d.ninos,
-        num_ninos: d.ninos ? d.num_ninos : 0,
-        fecha_inicio: d.fecha_inicio || null,
-        fecha_fin: d.fecha_fin || null,
-        precio: d.precio ?? 0,
-        metodo_pago: d.metodo_pago,
-        plataforma: d.metodo_pago === 'Transfer/Tarjeta' ? (d.plataforma ?? 'WeTravel') : null,
-        guia_id: d.guia_id || null,
-        transporte: d.transporte || null,
-        status: d.status,
-        notas: d.notas || null,
-      });
+      // El método principal de la reserva: el de la porción más grande
+      const principal = dividido
+        ? [...reparto].sort((a, b) => Number(b.monto) - Number(a.monto))[0]
+        : {
+            metodo_pago: d.metodo_pago as MetodoPago,
+            plataforma:
+              d.metodo_pago === 'Transfer/Tarjeta'
+                ? ((d.plataforma ?? 'WeTravel') as Plataforma)
+                : null,
+          };
+
+      const res = await guardarReservaConReparto(
+        {
+          id: d.id ?? null,
+          codigo: d.codigo ?? null,
+          nombre: d.nombre,
+          email: d.email || null,
+          telefono: d.telefono || null,
+          paquete_id: d.paquete_id,
+          personas: d.personas,
+          ninos: d.ninos,
+          num_ninos: d.ninos ? d.num_ninos : 0,
+          fecha_inicio: d.fecha_inicio || null,
+          fecha_fin: d.fecha_fin || null,
+          precio,
+          metodo_pago: principal.metodo_pago,
+          plataforma: principal.plataforma,
+          guia_id: d.guia_id || null,
+          transporte: d.transporte || null,
+          status: d.status,
+          notas: d.notas || null,
+        },
+        dividido
+          ? reparto.map((l) => ({
+              metodo_pago: l.metodo_pago,
+              plataforma: l.metodo_pago === 'Transfer/Tarjeta' ? (l.plataforma ?? 'WeTravel') : null,
+              monto: Number(l.monto) || 0,
+            }))
+          : []
+      );
       if (res.ok) onClose();
       else setError(res.error ?? 'No se pudo guardar.');
     });
@@ -249,50 +318,182 @@ export default function ReservaModal({
           <span className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-gray-700">
             <Icono n="card" s={13} c="#9CA3AF" />
             Método de pago<span className="text-red-600">*</span>
+            <span className="flex-1" />
+            <button
+              onClick={() => (dividido ? setDividido(false) : activarDividido())}
+              disabled={!precio}
+              className="rounded-lg border-2 px-2.5 py-1 text-[11px] font-bold transition disabled:opacity-40"
+              style={{
+                borderColor: dividido ? '#5B21B6' : '#E5E7EB',
+                background: dividido ? hexA('#5B21B6', 0.1) : '#fff',
+                color: dividido ? '#5B21B6' : '#6B7280',
+              }}
+            >
+              {dividido ? 'Un solo método' : 'Dividir el pago'}
+            </button>
           </span>
-          <div className="flex flex-wrap gap-2">
-            {METODOS.map((m) => (
-              <Opcion
-                key={m}
-                activa={d.metodo_pago === m}
-                color={COLOR_METODO[m]}
-                onClick={() =>
-                  set({
-                    metodo_pago: m,
-                    plataforma: m === 'Transfer/Tarjeta' ? (d.plataforma ?? 'WeTravel') : null,
-                  })
-                }
-              >
-                {m}
-              </Opcion>
-            ))}
-          </div>
 
-          {d.metodo_pago === 'Transfer/Tarjeta' && (
-            <div className="mt-2.5 rounded-xl border border-blue-200 bg-blue-50/50 p-3">
-              <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-gray-500">
-                Plataforma
-              </p>
+          {/* ---- Un solo método ---- */}
+          {!dividido && (
+            <>
               <div className="flex flex-wrap gap-2">
-                {PLATAFORMAS.map((p) => (
+                {METODOS.map((m) => (
                   <Opcion
-                    key={p}
-                    activa={d.plataforma === p}
-                    color={COLOR_PLATAFORMA[p]}
-                    onClick={() => set({ plataforma: p })}
+                    key={m}
+                    activa={d.metodo_pago === m}
+                    color={COLOR_METODO[m]}
+                    onClick={() =>
+                      set({
+                        metodo_pago: m,
+                        plataforma: m === 'Transfer/Tarjeta' ? (d.plataforma ?? 'WeTravel') : null,
+                      })
+                    }
                   >
-                    {p}
+                    {m}
                   </Opcion>
                 ))}
               </div>
-            </div>
+
+              {d.metodo_pago === 'Transfer/Tarjeta' && (
+                <div className="mt-2.5 rounded-xl border border-blue-200 bg-blue-50/50 p-3">
+                  <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-gray-500">
+                    Plataforma
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {PLATAFORMAS.map((p) => (
+                      <Opcion
+                        key={p}
+                        activa={d.plataforma === p}
+                        color={COLOR_PLATAFORMA[p]}
+                        onClick={() => set({ plataforma: p })}
+                      >
+                        {p}
+                      </Opcion>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {d.metodo_pago === 'Pago en comunidad' && (
+                <p className="mt-2.5 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-semibold text-amber-800">
+                  <Icono n="mountain" s={14} c="#B45309" />
+                  El cliente paga directamente en la comunidad al llegar.
+                </p>
+              )}
+            </>
           )}
 
-          {d.metodo_pago === 'Pago en comunidad' && (
-            <p className="mt-2.5 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-semibold text-amber-800">
-              <Icono n="mountain" s={14} c="#B45309" />
-              El cliente paga directamente en la comunidad al llegar.
-            </p>
+          {/* ---- Pago dividido ---- */}
+          {dividido && (
+            <div className="space-y-2 rounded-xl border-2 border-violet-200 bg-violet-50/40 p-3">
+              {reparto.map((l, i) => (
+                <div key={i} className="rounded-xl border border-gray-200 bg-white p-2.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      className="rounded-lg border border-gray-200 px-2 py-1.5 text-[11px] font-bold outline-none"
+                      style={{ color: COLOR_METODO[l.metodo_pago] }}
+                      value={l.metodo_pago}
+                      onChange={(e) => {
+                        const m = e.target.value as MetodoPago;
+                        setLinea(i, {
+                          metodo_pago: m,
+                          plataforma: m === 'Transfer/Tarjeta' ? (l.plataforma ?? 'WeTravel') : null,
+                        });
+                      }}
+                    >
+                      {METODOS.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))}
+                    </select>
+
+                    {l.metodo_pago === 'Transfer/Tarjeta' && (
+                      <select
+                        className="rounded-lg border border-gray-200 px-2 py-1.5 text-[11px] font-semibold outline-none"
+                        value={l.plataforma ?? 'WeTravel'}
+                        onChange={(e) => setLinea(i, { plataforma: e.target.value as Plataforma })}
+                      >
+                        {PLATAFORMAS.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+
+                    <span className="flex-1" />
+
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        className="w-16 rounded-lg border border-gray-200 px-2 py-1.5 text-right text-[11px] font-bold outline-none"
+                        value={pctDe(l)}
+                        onChange={(e) => setPct(i, Number(e.target.value) || 0)}
+                      />
+                      <span className="text-[11px] font-bold text-gray-400">%</span>
+                    </div>
+
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="w-28 rounded-lg border border-gray-200 px-2 py-1.5 text-right text-[11px] font-bold outline-none"
+                      value={l.monto || ''}
+                      onChange={(e) => setLinea(i, { monto: Number(e.target.value) || 0 })}
+                      placeholder="0.00"
+                    />
+
+                    {reparto.length > 2 && (
+                      <button
+                        onClick={() => setReparto((p) => p.filter((_, j) => j !== i))}
+                        title="Quitar"
+                        className="rounded-lg px-1.5 py-1 transition hover:bg-red-50"
+                      >
+                        <Icono n="trash" s={12} c="#DC2626" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() =>
+                    setReparto((p) => [
+                      ...p,
+                      { metodo_pago: 'Efectivo', plataforma: null, monto: falta > 0 ? falta : 0 },
+                    ])
+                  }
+                  className="flex items-center gap-1 rounded-lg border-2 border-gray-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-gray-600 transition hover:bg-gray-50"
+                >
+                  <Icono n="plus" s={12} c="#6B7280" />
+                  Otro método
+                </button>
+
+                <span className="flex-1" />
+
+                <span className="text-[11px] font-bold text-gray-500">
+                  Reparto: <b className="text-gray-900">{dinero(sumaReparto)}</b> de{' '}
+                  {dinero(precio)}
+                </span>
+              </div>
+
+              {Math.abs(falta) > 0.01 && (
+                <p className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] font-bold text-amber-800">
+                  <Icono n="alert" s={12} c="#B45309" />
+                  {falta > 0
+                    ? `Faltan ${dinero(falta)} por repartir.`
+                    : `Se pasa ${dinero(-falta)} del precio.`}
+                </p>
+              )}
+
+              <p className="text-[11px] font-semibold text-gray-500">
+                Cada parte se cobra por su lado: lo de tarjeta o transferencia se concilia en
+                Banca, y el efectivo se valida en Liquidación.
+              </p>
+            </div>
           )}
         </div>
 

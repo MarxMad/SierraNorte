@@ -78,8 +78,10 @@ export interface Reserva {
   fecha_inicio: string | null;
   fecha_fin: string | null;
   precio: number;
-  metodo_pago: MetodoPago;
+  metodo_pago: MetodoPago; // el método principal; el reparto real vive en `pagos`
   plataforma: Plataforma | null;
+  metodos: string[] | null; // con qué métodos se está pagando de verdad
+  mixto: boolean; // true si se paga con más de uno
   guia_id: string | null;
   guia: string | null;
   transporte: string | null;
@@ -89,6 +91,14 @@ export interface Reserva {
   saldo: number;
   pagado_pct: number;
   comunidades: string[] | null;
+  created_at: string;
+}
+
+// Una línea del pago dividido: 40% en efectivo, 60% por transferencia…
+export interface LineaPago {
+  metodo_pago: MetodoPago;
+  plataforma: Plataforma | null;
+  monto: number;
 }
 
 export interface Pago {

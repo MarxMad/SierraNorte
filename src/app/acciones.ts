@@ -52,6 +52,24 @@ export async function guardarReserva(datos: Record<string, unknown>): Promise<Re
   return fallo(error);
 }
 
+// Una reserva puede pagarse con varios métodos: 40% en efectivo y 60% por
+// transferencia, por ejemplo. Cada línea del reparto se convierte en un
+// cobro que se va por su canal (ver 19_pago_dividido.sql). El reparto
+// tiene que cuadrar con el precio: la base lo verifica.
+export async function guardarReservaConReparto(
+  reserva: Record<string, unknown>,
+  reparto: unknown[]
+): Promise<Resultado> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc('guardar_reserva_con_reparto', {
+    p_reserva: reserva,
+    p_reparto: reparto,
+  });
+
+  revalidarReserva();
+  return fallo(error);
+}
+
 export async function borrarReserva(id: string): Promise<Resultado> {
   const supabase = await createClient();
   const { error } = await supabase.from('reservas').delete().eq('id', id);

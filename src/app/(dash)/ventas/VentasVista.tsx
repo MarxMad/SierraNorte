@@ -5,6 +5,7 @@ import Encabezado from '@/components/Encabezado';
 import { Icono, Pill, Avatar, BotonAccion, Vacio, BtnPrimario } from '@/components/ui';
 import ReservaModal from './ReservaModal';
 import PaqueteModal from './PaqueteModal';
+import PanelReservas from './PanelReservas';
 import { borrarReserva } from '@/app/acciones';
 import {
   type Reserva,
@@ -23,6 +24,7 @@ import {
 import { puedeEditarVentas } from '@/lib/permisos';
 
 const VISTAS = [
+  { id: 'panel', label: 'Panel', icono: 'chart' },
   { id: 'clientes', label: 'Clientes', icono: 'users' },
   { id: 'paquetes', label: 'Paquetes', icono: 'clipboard' },
 ];
@@ -83,19 +85,23 @@ export default function VentasVista({
           editable && (
             <BtnPrimario
               onClick={() =>
-                vista === 'clientes'
-                  ? setEditandoReserva({ personas: 1, metodo_pago: 'Efectivo', status: 'Planeación' })
-                  : setEditandoPaquete({} as Paquete)
+                vista === 'paquetes'
+                  ? setEditandoPaquete({} as Paquete)
+                  : setEditandoReserva({ personas: 1, metodo_pago: 'Efectivo', status: 'Planeación' })
               }
             >
               <Icono n="plus" s={15} c="#fff" />
-              {vista === 'clientes' ? 'Nueva reserva' : 'Crear paquete'}
+              {vista === 'paquetes' ? 'Crear paquete' : 'Nueva reserva'}
             </BtnPrimario>
           )
         }
       />
 
-      <div className="flex min-h-0 flex-1 flex-col px-6 py-4">
+      <div className="flex min-h-0 flex-1 flex-col overflow-auto px-6 py-4">
+        {vista === 'panel' && (
+          <PanelReservas reservas={reservas} onAbrir={(r) => setEditandoReserva(r)} />
+        )}
+
         {vista === 'clientes' ? (
           <>
             <div className="mb-3 flex flex-wrap items-center gap-2.5">
@@ -202,13 +208,22 @@ export default function VentasVista({
                         </Td>
                         <Td>
                           <div className="flex flex-wrap gap-1">
-                            <Pill texto={r.metodo_pago} color={COLOR_METODO[r.metodo_pago]} />
-                            {r.plataforma && (
-                              <Pill
-                                texto={r.plataforma}
-                                color={COLOR_PLATAFORMA[r.plataforma]}
-                                dot={false}
-                              />
+                            {r.mixto ? (
+                              // Se paga con varios métodos: el detalle vive en sus cobros
+                              (r.metodos ?? []).map((m) => (
+                                <Pill key={m} texto={m} color={COLOR_METODO[m] ?? '#6B7280'} />
+                              ))
+                            ) : (
+                              <>
+                                <Pill texto={r.metodo_pago} color={COLOR_METODO[r.metodo_pago]} />
+                                {r.plataforma && (
+                                  <Pill
+                                    texto={r.plataforma}
+                                    color={COLOR_PLATAFORMA[r.plataforma]}
+                                    dot={false}
+                                  />
+                                )}
+                              </>
                             )}
                           </div>
                         </Td>
