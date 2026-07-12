@@ -4,21 +4,25 @@ import { useState, useTransition } from 'react';
 import { Icono } from '@/components/ui';
 import { solicitarReserva } from '@/app/acciones-web';
 import { hexA } from '@/lib/tipos';
+import { dict, type Idioma } from '@/lib/i18n';
 
 export default function ReservaForm({
+  lang,
   paqueteId,
   paqueteNombre,
   precio,
   color,
   onClose,
 }: {
+  lang: Idioma;
   paqueteId: string;
   paqueteNombre: string;
   precio: number;
   color: string;
   onClose: () => void;
 }) {
-  const [d, setD] = useState({
+  const d = dict(lang);
+  const [datos, setDatos] = useState({
     nombre: '',
     email: '',
     telefono: '',
@@ -32,13 +36,13 @@ export default function ReservaForm({
   const [codigo, setCodigo] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const set = (p: Partial<typeof d>) => setD((v) => ({ ...v, ...p }));
-  const total = precio * d.personas;
+  const set = (p: Partial<typeof datos>) => setDatos((v) => ({ ...v, ...p }));
+  const total = precio * datos.personas;
 
   const enviar = () => {
     setError(null);
     startTransition(async () => {
-      const res = await solicitarReserva({ ...d, paqueteId });
+      const res = await solicitarReserva({ ...datos, paqueteId, lang });
       if (res.ok && res.codigo) setCodigo(res.codigo);
       else setError(res.error ?? 'No se pudo enviar la solicitud.');
     });
@@ -61,15 +65,12 @@ export default function ReservaForm({
             <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50">
               <Icono n="checkCircle" s={32} c="#16A34A" />
             </span>
-            <h2 className="mt-5 text-2xl font-extrabold text-gray-900">Solicitud enviada</h2>
-            <p className="mt-2 text-gray-500">
-              Te vamos a escribir a <b className="text-gray-700">{d.email}</b> para confirmar
-              disponibilidad y forma de pago.
-            </p>
+            <h2 className="mt-5 text-2xl font-extrabold text-gray-900">{d.formOkTitulo}</h2>
+            <p className="mt-2 text-gray-500">{d.formOkSub(datos.email)}</p>
 
             <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4">
               <p className="text-[11px] font-bold uppercase tracking-wide text-gray-400">
-                Tu código de reserva
+                {d.formCodigo}
               </p>
               <p className="mt-1 font-mono text-2xl font-extrabold text-[#5B21B6]">{codigo}</p>
             </div>
@@ -79,7 +80,7 @@ export default function ReservaForm({
               className="mt-7 w-full rounded-xl px-5 py-3.5 text-sm font-bold text-white"
               style={{ background: color }}
             >
-              Listo
+              {d.formListo}
             </button>
           </div>
         ) : (
@@ -87,7 +88,7 @@ export default function ReservaForm({
             {/* ---------- Formulario ---------- */}
             <div className="flex items-start gap-3 border-b border-gray-100 px-6 py-5">
               <div className="min-w-0 flex-1">
-                <h2 className="text-lg font-extrabold text-gray-900">Solicitar reserva</h2>
+                <h2 className="text-lg font-extrabold text-gray-900">{d.formTitulo}</h2>
                 <p className="mt-0.5 truncate text-sm text-gray-500">{paqueteNombre}</p>
               </div>
               <button
@@ -99,29 +100,29 @@ export default function ReservaForm({
             </div>
 
             <div className="space-y-4 px-6 py-5">
-              <Campo label="Tu nombre" req>
+              <Campo label={d.formNombre} req>
                 <input
                   className={input}
-                  value={d.nombre}
+                  value={datos.nombre}
                   onChange={(e) => set({ nombre: e.target.value })}
-                  placeholder="Nombre y apellido"
+                  placeholder={d.formNombrePh}
                 />
               </Campo>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <Campo label="Correo" req>
+                <Campo label={d.formCorreo} req>
                   <input
                     className={input}
                     type="email"
-                    value={d.email}
+                    value={datos.email}
                     onChange={(e) => set({ email: e.target.value })}
                     placeholder="tu@correo.com"
                   />
                 </Campo>
-                <Campo label="Teléfono / WhatsApp">
+                <Campo label={d.formTel}>
                   <input
                     className={input}
-                    value={d.telefono}
+                    value={datos.telefono}
                     onChange={(e) => set({ telefono: e.target.value })}
                     placeholder="951 000 0000"
                   />
@@ -129,23 +130,23 @@ export default function ReservaForm({
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <Campo label="¿Cuántas personas?" req>
+                <Campo label={d.formPersonas} req>
                   <input
                     className={input}
                     type="number"
                     min={1}
                     max={30}
-                    value={d.personas}
+                    value={datos.personas}
                     onChange={(e) =>
                       set({ personas: Math.max(1, Math.min(30, Number(e.target.value) || 1)) })
                     }
                   />
                 </Campo>
-                <Campo label="¿Qué día quieren salir?">
+                <Campo label={d.formFecha}>
                   <input
                     className={input}
                     type="date"
-                    value={d.fecha}
+                    value={datos.fecha}
                     onChange={(e) => set({ fecha: e.target.value })}
                   />
                 </Campo>
@@ -153,50 +154,50 @@ export default function ReservaForm({
 
               {/* Niños */}
               <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
-                <p className="mb-2.5 text-xs font-bold text-gray-700">¿Vienen niños?</p>
+                <p className="mb-2.5 text-xs font-bold text-gray-700">{d.formNinos}</p>
                 <div className="flex flex-wrap items-center gap-2">
                   <Opcion
-                    activa={!d.ninos}
+                    activa={!datos.ninos}
                     color="#6B7280"
                     onClick={() => set({ ninos: false, numNinos: 0 })}
                   >
-                    No
+                    {d.formNo}
                   </Opcion>
                   <Opcion
-                    activa={d.ninos}
+                    activa={datos.ninos}
                     color="#B45309"
-                    onClick={() => set({ ninos: true, numNinos: d.numNinos || 1 })}
+                    onClick={() => set({ ninos: true, numNinos: datos.numNinos || 1 })}
                   >
-                    Sí
+                    {d.formSi}
                   </Opcion>
-                  {d.ninos && (
+                  {datos.ninos && (
                     <input
                       type="number"
                       min={1}
-                      max={d.personas}
-                      value={d.numNinos}
+                      max={datos.personas}
+                      value={datos.numNinos}
                       onChange={(e) =>
                         set({
-                          numNinos: Math.max(1, Math.min(d.personas, Number(e.target.value) || 1)),
+                          numNinos: Math.max(1, Math.min(datos.personas, Number(e.target.value) || 1)),
                         })
                       }
                       className="w-20 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-800 outline-none"
                     />
                   )}
                 </div>
-                {d.ninos && (
+                {datos.ninos && (
                   <p className="mt-2 text-[11px] font-semibold text-amber-700">
-                    Los niños van incluidos dentro del total de personas.
+                    {d.formNinosNota}
                   </p>
                 )}
               </div>
 
-              <Campo label="¿Algo que debamos saber?">
+              <Campo label={d.formNotas}>
                 <textarea
                   className={`${input} min-h-20 resize-y`}
-                  value={d.notas}
+                  value={datos.notas}
                   onChange={(e) => set({ notas: e.target.value })}
-                  placeholder="Alergias, condición física, idioma, hora de llegada…"
+                  placeholder={d.formNotasPh}
                 />
               </Campo>
 
@@ -205,7 +206,7 @@ export default function ReservaForm({
                   style={{ background: hexA(color, 0.06), borderColor: hexA(color, 0.25) }}
                 >
                   <span className="text-sm font-semibold text-gray-600">
-                    {d.personas} × ${precio.toLocaleString('es-MX')}
+                    {datos.personas} × ${precio.toLocaleString('es-MX')}
                   </span>
                   <span className="text-lg font-extrabold" style={{ color }}>
                     ${total.toLocaleString('es-MX')}
@@ -225,11 +226,11 @@ export default function ReservaForm({
                 className="w-full rounded-xl px-5 py-3.5 text-sm font-bold text-white shadow-sm transition hover:brightness-110 disabled:opacity-60"
                 style={{ background: color }}
               >
-                {pending ? 'Enviando…' : 'Enviar solicitud'}
+                {pending ? d.formEnviando : d.formEnviar}
               </button>
 
               <p className="text-center text-[11px] leading-relaxed text-gray-400">
-                No se cobra nada ahora. Te contactamos para confirmar disponibilidad y forma de pago.
+                {d.formLegal}
               </p>
             </div>
           </>

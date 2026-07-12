@@ -22,10 +22,25 @@ export async function solicitarReserva(datos: {
   numNinos: number;
   fecha: string;
   notas: string;
+  lang?: 'es' | 'en';
 }): Promise<ResultadoReserva> {
-  if (!datos.nombre.trim()) return { ok: false, error: 'Escribe tu nombre.' };
+  const en = datos.lang === 'en';
+  const msg = {
+    nombre: en ? 'Please write your name.' : 'Escribe tu nombre.',
+    correo: en ? 'That email does not look valid.' : 'El correo no parece válido.',
+    personas: en ? 'That number of people is not valid.' : 'El número de personas no es válido.',
+    ninos: en
+      ? 'Children cannot exceed the total number of people.'
+      : 'Los niños no pueden exceder el total de personas.',
+    paquete: en ? 'That experience is no longer available.' : 'Esa experiencia ya no está disponible.',
+    generico: en
+      ? 'We could not send your request. Please write to us on WhatsApp.'
+      : 'No pudimos enviar tu solicitud. Escríbenos por WhatsApp.',
+  };
+
+  if (!datos.nombre.trim()) return { ok: false, error: msg.nombre };
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(datos.email.trim()))
-    return { ok: false, error: 'El correo no parece válido.' };
+    return { ok: false, error: msg.correo };
 
   const supabase = await createClient();
 
@@ -43,11 +58,11 @@ export async function solicitarReserva(datos: {
 
   if (error) {
     const m = error.message;
-    if (m.includes('correo')) return { ok: false, error: 'El correo no es válido.' };
-    if (m.includes('personas')) return { ok: false, error: 'El número de personas no es válido.' };
-    if (m.includes('niños')) return { ok: false, error: 'Los niños no pueden exceder el total de personas.' };
-    if (m.includes('paquete')) return { ok: false, error: 'Esa experiencia ya no está disponible.' };
-    return { ok: false, error: 'No pudimos enviar tu solicitud. Escríbenos por WhatsApp.' };
+    if (m.includes('correo')) return { ok: false, error: msg.correo };
+    if (m.includes('personas')) return { ok: false, error: msg.personas };
+    if (m.includes('niños')) return { ok: false, error: msg.ninos };
+    if (m.includes('paquete')) return { ok: false, error: msg.paquete };
+    return { ok: false, error: msg.generico };
   }
 
   // La reserva ya aparece en el dashboard del equipo

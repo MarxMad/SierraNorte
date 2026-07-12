@@ -1,20 +1,42 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { CONTACTO } from '@/lib/contenido';
+import { dict, ruta, otroIdioma, type Idioma } from '@/lib/i18n';
 
-const LINKS = [
-  { href: '/#experiencias', label: 'Experiencias' },
-  { href: '/region', label: 'La región' },
-  { href: '/proyecto', label: 'El proyecto' },
-  { href: '/equipo', label: 'Quiénes somos' },
-  { href: '/#contacto', label: 'Contacto' },
-];
+const enlaces = (lang: Idioma) => {
+  const d = dict(lang);
+  return [
+    { href: ruta(lang, '/#experiencias'), label: d.experiencias },
+    { href: ruta(lang, '/region'), label: d.laRegion },
+    { href: ruta(lang, '/proyecto'), label: d.elProyecto },
+    { href: ruta(lang, '/equipo'), label: d.quienesSomos },
+    { href: ruta(lang, '/#contacto'), label: d.contacto },
+  ];
+};
 
-export function Nav() {
+/** Selector de idioma. `aqui` es la ruta sin prefijo: '/', '/region', … */
+function Idiomas({ lang, aqui }: { lang: Idioma; aqui: string }) {
+  const otro = otroIdioma(lang);
+  return (
+    <div className="flex items-center overflow-hidden rounded-lg border border-gray-200 text-[11px] font-extrabold">
+      <span className="bg-[#1F7D5E] px-2 py-1.5 text-white">{lang.toUpperCase()}</span>
+      <Link
+        href={ruta(otro, aqui)}
+        hrefLang={otro}
+        className="px-2 py-1.5 text-gray-500 transition hover:bg-gray-50 hover:text-[#1F7D5E]"
+      >
+        {otro.toUpperCase()}
+      </Link>
+    </div>
+  );
+}
+
+export function Nav({ lang, aqui = '/' }: { lang: Idioma; aqui?: string }) {
+  const d = dict(lang);
   return (
     <nav className="sticky top-0 z-50 border-b border-black/5 bg-white/85 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-5 py-3">
-        <Link href="/" className="flex shrink-0 items-center gap-3">
+        <Link href={ruta(lang, '/')} className="flex shrink-0 items-center gap-3">
           <Image src="/sierran.png" alt="" width={36} height={36} />
           <span className="leading-tight">
             <span className="block text-[13px] font-extrabold text-gray-900">
@@ -27,7 +49,7 @@ export function Nav() {
         </Link>
         <div className="flex-1" />
         <div className="hidden items-center gap-6 lg:flex">
-          {LINKS.map((l) => (
+          {enlaces(lang).map((l) => (
             <Link
               key={l.href}
               href={l.href}
@@ -37,18 +59,20 @@ export function Nav() {
             </Link>
           ))}
         </div>
+        <Idiomas lang={lang} aqui={aqui} />
         <Link
           href="/login"
-          className="ml-2 rounded-lg border border-gray-200 px-3.5 py-2 text-sm font-bold text-gray-700 transition hover:border-[#1F7D5E] hover:text-[#1F7D5E]"
+          className="rounded-lg border border-gray-200 px-3.5 py-2 text-sm font-bold text-gray-700 transition hover:border-[#1F7D5E] hover:text-[#1F7D5E]"
         >
-          Entrar
+          {d.entrar}
         </Link>
       </div>
     </nav>
   );
 }
 
-export function Footer() {
+export function Footer({ lang }: { lang: Idioma }) {
+  const d = dict(lang);
   return (
     <footer className="border-t border-gray-100 bg-white py-10">
       <div className="mx-auto max-w-6xl px-5">
@@ -60,7 +84,7 @@ export function Footer() {
           </div>
           <div className="flex-1" />
           <div className="flex flex-wrap gap-5">
-            {LINKS.map((l) => (
+            {enlaces(lang).map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
@@ -91,7 +115,7 @@ export function Footer() {
             © {new Date().getFullYear()} Expediciones Sierra Norte
           </p>
           <Link href="/login" className="text-xs font-bold text-gray-500 hover:text-[#1F7D5E]">
-            Acceso del equipo
+            {d.accesoEquipo}
           </Link>
         </div>
       </div>

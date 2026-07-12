@@ -2,6 +2,6 @@ import LandingPage from '@/paginas/landing';
 
 export const revalidate = 3600;
 
-export default function Home() {
-  return <LandingPage lang="es" />;
+export default function HomeEn() {
+  return <LandingPage lang="en" />;
 }

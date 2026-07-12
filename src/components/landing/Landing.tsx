@@ -4,12 +4,13 @@ import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Comunidad, Duracion } from '@/lib/tipos';
-import type { PaqueteWeb } from '@/app/page';
+import type { PaqueteWeb } from '@/paginas/landing';
 import { Icono } from '@/components/ui';
 import { Nav, Footer, Curvas } from '@/components/landing/Chrome';
 import { CONTACTO } from '@/lib/contenido';
 import { COLOR_DURACION, hexA } from '@/lib/tipos';
-import { PORTADA, fotoDe, fotoComunidad, GALERIA } from '@/lib/fotos';
+import { PORTADA, fotoDe, fotoComunidad } from '@/lib/fotos';
+import { dict, ruta, type Idioma, type Dict } from '@/lib/i18n';
 
 const WHATSAPP = CONTACTO.whatsapp;
 const TEL = CONTACTO.telefono;
@@ -19,12 +20,15 @@ const DIRECCION = CONTACTO.direccion;
 const ORDEN: Duracion[] = ['1 día', '2 días', '3 días', '4 días', '5 días', '7 días', 'Servicios'];
 
 export default function Landing({
+  lang,
   paquetes,
   comunidades,
 }: {
+  lang: Idioma;
   paquetes: PaqueteWeb[];
   comunidades: Comunidad[];
 }) {
+  const d = dict(lang);
   const [filtro, setFiltro] = useState<Duracion | 'todos'>('todos');
 
   const experiencias = useMemo(() => paquetes.filter((p) => p.duracion !== 'Servicios'), [paquetes]);
@@ -43,7 +47,7 @@ export default function Landing({
 
   return (
     <div className="min-h-screen bg-white">
-      <Nav />
+      <Nav lang={lang} aqui="/" />
 
       {/* ============ HERO ============ */}
       <header className="relative overflow-hidden">
@@ -60,19 +64,17 @@ export default function Landing({
         <div className="relative mx-auto max-w-6xl px-5 py-24 sm:py-32">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-bold text-white/90 backdrop-blur">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-            Turismo comunitario · Sierra Norte de Oaxaca
+            {d.heroBadge}
           </span>
 
           <h1 className="mt-6 max-w-3xl text-4xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-6xl">
-            Camina la sierra.
+            {d.heroTitulo1}
             <br />
-            <span className="text-emerald-300">Duerme en el pueblo.</span>
+            <span className="text-emerald-300">{d.heroTitulo2}</span>
           </h1>
 
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/75">
-            {experiencias.length} experiencias entre bosques de pino-encino, caminos reales y
-            miradores a 3,200 metros. Operadas por las {comunidades.length} comunidades zapotecas de
-            los Pueblos Mancomunados.
+            {d.heroSub(experiencias.length, comunidades.length)}
           </p>
 
           <div className="mt-9 flex flex-wrap gap-3">
@@ -80,7 +82,7 @@ export default function Landing({
               href="#experiencias"
               className="rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-[#0F3D2E] shadow-lg shadow-black/20 transition hover:bg-emerald-50"
             >
-              Ver las experiencias
+              {d.verExperiencias}
             </a>
             <a
               href={`https://wa.me/${WHATSAPP}`}
@@ -89,15 +91,15 @@ export default function Landing({
               className="flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-6 py-3.5 text-sm font-bold text-white backdrop-blur transition hover:bg-white/20"
             >
               <IconoWhats />
-              Reservar por WhatsApp
+              {d.reservarWhats}
             </a>
           </div>
 
           <dl className="mt-16 grid max-w-2xl grid-cols-2 gap-6 border-t border-white/15 pt-8 sm:grid-cols-4">
-            <Dato n={comunidades.length} l="Comunidades" />
-            <Dato n={experiencias.length} l="Experiencias" />
-            <Dato n="1–7" l="Días de ruta" />
-            <Dato n="100%" l="Comunitario" />
+            <Dato n={comunidades.length} l={d.comunidades} />
+            <Dato n={experiencias.length} l={d.experiencias} />
+            <Dato n="1–7" l={d.diasDeRuta} />
+            <Dato n="100%" l={d.comunitario} />
           </dl>
         </div>
       </header>
@@ -107,14 +109,13 @@ export default function Landing({
         <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
           <div>
             <p className="text-xs font-extrabold uppercase tracking-widest text-[#1F7D5E]">
-              Paquetes de experiencias
+              {d.paquetesEyebrow}
             </p>
             <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-              Elige cuántos días quieres perderte
+              {d.paquetesTitulo}
             </h2>
             <p className="mt-3 max-w-xl text-gray-500">
-              Desde una caminata de un día hasta la travesía de siete que atraviesa seis pueblos.
-              Todas incluyen guía local, alimentos y hospedaje en cabañas.
+              {d.paquetesSub}
             </p>
           </div>
         </div>
@@ -122,7 +123,7 @@ export default function Landing({
         {/* Filtro */}
         <div className="mb-8 flex flex-wrap gap-2">
           <Filtro activo={filtro === 'todos'} onClick={() => setFiltro('todos')} color="#0F3D2E">
-            Todas ({experiencias.length})
+            {d.todas} ({experiencias.length})
           </Filtro>
           {duraciones.map((d) => {
             const n = experiencias.filter((p) => p.duracion === d).length;
@@ -142,7 +143,7 @@ export default function Landing({
         {/* Tarjetas */}
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {visibles.map((p) => (
-            <Tarjeta key={p.id} p={p} />
+            <Tarjeta key={p.id} p={p} lang={lang} d={d} />
           ))}
         </div>
 
@@ -152,24 +153,22 @@ export default function Landing({
             <div className="flex flex-wrap items-center gap-6">
               <div className="flex-1">
                 <p className="text-xs font-extrabold uppercase tracking-widest text-teal-700">
-                  A la carta
+                  {d.alaCarta}
                 </p>
                 <h3 className="mt-1.5 text-xl font-extrabold text-gray-900">
-                  ¿Sólo quieres una pieza?
+                  {d.alaCartaTitulo}
                 </h3>
                 <p className="mt-2 max-w-lg text-sm text-gray-600">
-                  Anfitrión bilingüe, transporte, guía de sendero, tirolesa, temazcal, talleres de
-                  cocina tradicional o una noche en cabaña. Se venden por separado o se agregan a
-                  cualquier ruta.
+                  {d.alaCartaSub}
                 </p>
               </div>
               <a
-                href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent('Hola, me interesan los servicios individuales.')}`}
+                href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(lang === 'es' ? 'Hola, me interesan los servicios individuales.' : 'Hi, I am interested in the individual services.')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="rounded-xl bg-teal-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-teal-800"
               >
-                Cotizar servicios
+                {d.cotizarServicios}
               </a>
             </div>
           </div>
@@ -180,15 +179,13 @@ export default function Landing({
       <section id="comunidades" className="border-y border-gray-100 bg-gray-50 py-20">
         <div className="mx-auto max-w-6xl px-5">
           <p className="text-xs font-extrabold uppercase tracking-widest text-[#1F7D5E]">
-            Pueblos Mancomunados
+            {d.pueblosEyebrow}
           </p>
           <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-            {comunidades.length} pueblos, un solo territorio
+            {d.pueblosTitulo(comunidades.length)}
           </h2>
           <p className="mt-3 max-w-2xl text-gray-500">
-            Son comunidades zapotecas que administran en común un territorio de bosque de niebla y
-            pino-encino. No hay intermediarios: las cabañas, los comedores y los guías son de los
-            pueblos.
+            {d.pueblosSub}
           </p>
 
           <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -210,7 +207,7 @@ export default function Landing({
                   <div className="absolute inset-x-0 bottom-0 p-4">
                     <p className="font-bold text-white">{c.nombre}</p>
                     <p className="mt-0.5 text-xs font-semibold text-white/70">
-                      {n} {n === 1 ? 'experiencia' : 'experiencias'}
+                      {d.experiencia(n)}
                     </p>
                   </div>
                   <span
@@ -229,43 +226,23 @@ export default function Landing({
         <div className="grid gap-12 lg:grid-cols-2">
           <div>
             <p className="text-xs font-extrabold uppercase tracking-widest text-[#1F7D5E]">
-              Por qué existimos
+              {d.porQueEyebrow}
             </p>
             <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-              El turismo, bien hecho, cuida lo que toca
+              {d.porQueTitulo}
             </h2>
             <blockquote className="mt-6 border-l-4 border-[#1F7D5E] pl-5 text-lg italic leading-relaxed text-gray-600">
               “When done right, tourism can protect the natural and cultural treasures of a place,
               rather than destroy them.”
             </blockquote>
-            <p className="mt-6 leading-relaxed text-gray-600">
-              Lo que dejas en la sierra se queda en la sierra: en quien te guía, en quien te da de
-              comer y en quien mantiene el sendero abierto. No somos una agencia que trae gente a los
-              pueblos: somos los pueblos.
-            </p>
+            <p className="mt-6 leading-relaxed text-gray-600">{d.porQueTexto}</p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Pilar
-              icono="route"
-              titulo="Senderos con historia"
-              texto="Caminos reales prehispánicos, antiguas minas y ex haciendas. No son rutas inventadas para el turista."
-            />
-            <Pilar
-              icono="utensils"
-              titulo="Cocina de la comunidad"
-              texto="Comes lo que se cocina en el pueblo: trucha, hongos de temporada, tortillas hechas a mano."
-            />
-            <Pilar
-              icono="hut"
-              titulo="Cabañas comunitarias"
-              texto="Hospedaje operado por las propias comunidades, a 3,200 metros sobre el nivel del mar."
-            />
-            <Pilar
-              icono="language"
-              titulo="Anfitrión bilingüe"
-              texto="Guías locales que hablan español e inglés y conocen el monte de memoria."
-            />
+            <Pilar icono="route" titulo={d.pilar1t} texto={d.pilar1d} />
+            <Pilar icono="utensils" titulo={d.pilar2t} texto={d.pilar2d} />
+            <Pilar icono="hut" titulo={d.pilar3t} texto={d.pilar3d} />
+            <Pilar icono="language" titulo={d.pilar4t} texto={d.pilar4d} />
           </div>
         </div>
       </section>
@@ -277,11 +254,10 @@ export default function Landing({
           <div className="grid gap-12 lg:grid-cols-2">
             <div>
               <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-                ¿Nos vemos en la sierra?
+                {d.contactoTitulo}
               </h2>
               <p className="mt-4 max-w-md leading-relaxed text-white/70">
-                Escríbenos y armamos la ruta contigo: cuántos son, cuántos días tienen y qué tan
-                fuerte le quieren dar.
+                {d.contactoSub}
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -298,33 +274,33 @@ export default function Landing({
                   href={`mailto:${EMAIL}`}
                   className="rounded-xl border border-white/25 bg-white/10 px-6 py-3.5 text-sm font-bold text-white backdrop-blur transition hover:bg-white/20"
                 >
-                  Enviar correo
+                  {d.enviarCorreo}
                 </a>
               </div>
             </div>
 
             <div className="space-y-1 lg:pl-10">
-              <Contacto icono="note" label="Correo" valor={EMAIL} href={`mailto:${EMAIL}`} />
-              <Contacto icono="bell" label="Teléfono" valor={TEL} href={`tel:${TEL.replace(/\s/g, '')}`} />
-              <Contacto icono="mountain" label="Oficina" valor={DIRECCION} />
+              <Contacto icono="note" label={d.correo} valor={EMAIL} href={`mailto:${EMAIL}`} />
+              <Contacto icono="bell" label={d.telefono} valor={TEL} href={`tel:${TEL.replace(/\s/g, '')}`} />
+              <Contacto icono="mountain" label={d.oficina} valor={DIRECCION} />
             </div>
           </div>
         </div>
       </section>
 
-      <Footer />
+      <Footer lang={lang} />
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
 
-function Tarjeta({ p }: { p: PaqueteWeb }) {
+function Tarjeta({ p, lang, d }: { p: PaqueteWeb; lang: Idioma; d: Dict }) {
   const color = COLOR_DURACION[p.duracion];
 
   return (
     <Link
-      href={`/experiencias/${p.id}`}
+      href={ruta(lang, `/experiencias/${p.id}`)}
       className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white transition hover:-translate-y-1 hover:shadow-xl"
     >
       {/* Foto */}
@@ -345,7 +321,7 @@ function Tarjeta({ p }: { p: PaqueteWeb }) {
         </span>
         {p.dias > 0 && (
           <span className="absolute bottom-3.5 left-4 text-xs font-bold text-white/95 drop-shadow">
-            {p.dias} {p.dias === 1 ? 'día de ruta' : 'días de ruta'}
+            {d.diaRuta(p.dias)}
           </span>
         )}
       </div>
@@ -380,20 +356,20 @@ function Tarjeta({ p }: { p: PaqueteWeb }) {
         <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4">
           {p.precio > 0 ? (
             <span>
-              <span className="text-xs text-gray-400">desde </span>
+              <span className="text-xs text-gray-400">{d.desde} </span>
               <span className="text-lg font-extrabold text-gray-900">
                 ${p.precio.toLocaleString('es-MX')}
               </span>
             </span>
           ) : (
-            <span className="text-sm font-semibold text-gray-400">Cotización a medida</span>
+            <span className="text-sm font-semibold text-gray-400">{d.cotizacion}</span>
           )}
 
           <span
             className="flex items-center gap-1 text-xs font-extrabold transition group-hover:gap-2"
             style={{ color }}
           >
-            Ver itinerario
+            {d.verItinerario}
             <Icono n="chevron" s={12} c={color} />
           </span>
         </div>

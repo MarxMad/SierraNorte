@@ -34,10 +34,17 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   // El sitio público (landing, región, proyecto, equipo) y el login no piden
   // sesión. Todo lo demás — el dashboard — sí.
+  // El sitio público existe en español (/) y en inglés (/en).
   const PUBLICAS = ['/', '/region', '/proyecto', '/equipo'];
+  const sinIdioma = pathname.startsWith('/en/')
+    ? pathname.slice(3)
+    : pathname === '/en'
+      ? '/'
+      : pathname;
+
   const esPublica =
-    PUBLICAS.includes(pathname) ||
-    pathname.startsWith('/experiencias') ||
+    PUBLICAS.includes(sinIdioma) ||
+    sinIdioma.startsWith('/experiencias') ||
     pathname.startsWith('/login') ||
     pathname.startsWith('/auth');
 

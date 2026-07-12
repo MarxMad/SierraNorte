@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { Icono } from '@/components/ui';
 import ReservaForm from '@/components/landing/ReservaForm';
 import { COLOR_DURACION, COLOR_LIQ, hexA, type Duracion } from '@/lib/tipos';
-import type { Dia } from './page';
+import { dict, ruta, type Idioma } from '@/lib/i18n';
+import type { Dia } from '@/paginas/experiencia';
 
 type Paquete = {
   id: string;
@@ -16,27 +17,36 @@ type Paquete = {
   precio: number;
 };
 
-// Cómo se lee cada tipo de actividad del itinerario
-const ETIQUETA: Record<string, { label: string; icono: string }> = {
-  Sendero: { label: 'Caminata', icono: 'route' },
-  Hospedaje: { label: 'Hospedaje', icono: 'hut' },
-  Actividad: { label: 'Actividad', icono: 'mountain' },
-  Taller: { label: 'Taller', icono: 'users' },
+const ICONO_TIPO: Record<string, string> = {
+  Sendero: 'route',
+  Hospedaje: 'hut',
+  Actividad: 'mountain',
+  Taller: 'users',
 };
 
 export default function DetalleExperiencia({
+  lang,
   paquete,
   foto,
   comunidades,
   itinerario,
 }: {
+  lang: Idioma;
   paquete: Paquete;
   foto: string;
   comunidades: { id: string; nombre: string; color: string }[];
   itinerario: Dia[];
 }) {
+  const d = dict(lang);
   const [abierto, setAbierto] = useState(false);
   const color = COLOR_DURACION[paquete.duracion];
+
+  const ETIQUETA: Record<string, string> = {
+    Sendero: d.tipoCaminata,
+    Hospedaje: d.tipoHospedaje,
+    Actividad: d.tipoActividad,
+    Taller: d.tipoTaller,
+  };
 
   // Kilómetros y horas que aparecen en el texto del itinerario
   const km = itinerario
@@ -62,13 +72,13 @@ export default function DetalleExperiencia({
         <div className="absolute inset-x-0 bottom-0">
           <div className="mx-auto max-w-6xl px-5 pb-10">
             <Link
-              href="/#experiencias"
+              href={ruta(lang, '/#experiencias')}
               className="mb-5 inline-flex items-center gap-1.5 text-sm font-bold text-white/80 transition hover:text-white"
             >
               <span className="rotate-180">
                 <Icono n="chevron" s={13} c="currentColor" />
               </span>
-              Todas las experiencias
+              {d.todasExperiencias}
             </Link>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -96,19 +106,19 @@ export default function DetalleExperiencia({
               {itinerario.length > 0 && (
                 <span className="flex items-center gap-2">
                   <Icono n="calendar" s={15} c="#6EE7B7" />
-                  {itinerario.length} {itinerario.length === 1 ? 'día' : 'días'}
+                  {itinerario.length} {itinerario.length === 1 ? d.dia : d.dias}
                 </span>
               )}
               {km > 0 && (
                 <span className="flex items-center gap-2">
                   <Icono n="route" s={15} c="#6EE7B7" />
-                  {km} km de sendero
+                  {km} {d.kmSendero}
                 </span>
               )}
               <span className="flex items-center gap-2">
                 <Icono n="mountain" s={15} c="#6EE7B7" />
                 {comunidades.length}{' '}
-                {comunidades.length === 1 ? 'comunidad' : 'comunidades'}
+                {comunidades.length === 1 ? d.comunidad : d.comunidades.toLowerCase()}
               </span>
             </div>
           </div>
@@ -126,16 +136,14 @@ export default function DetalleExperiencia({
             {itinerario.length > 0 && (
               <section className="mt-12">
                 <h2 className="text-2xl font-extrabold tracking-tight text-gray-900">
-                  Itinerario día por día
+                  {d.itinerarioTitulo}
                 </h2>
-                <p className="mt-1.5 text-sm text-gray-500">
-                  Esto es exactamente lo que vas a caminar, comer y dónde vas a dormir.
-                </p>
+                <p className="mt-1.5 text-sm text-gray-500">{d.itinerarioSub}</p>
 
                 <ol className="mt-8 space-y-5">
-                  {itinerario.map((d) => (
+                  {itinerario.map((dia) => (
                     <li
-                      key={d.dia}
+                      key={dia.dia}
                       className="overflow-hidden rounded-2xl border border-gray-200 bg-white"
                     >
                       <div
@@ -146,14 +154,14 @@ export default function DetalleExperiencia({
                           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold text-white"
                           style={{ background: color }}
                         >
-                          D{d.dia}
+                          D{dia.dia}
                         </span>
-                        <span className="font-extrabold text-gray-900">{d.recorrido}</span>
+                        <span className="font-extrabold text-gray-900">{dia.recorrido}</span>
                       </div>
 
                       <ul className="divide-y divide-gray-50">
-                        {d.items.map((it) => {
-                          const meta = it.tipo ? ETIQUETA[it.tipo] : null;
+                        {dia.items.map((it) => {
+                          const etiqueta = it.tipo ? ETIQUETA[it.tipo] : null;
                           const c = it.tipo ? COLOR_LIQ[it.tipo] : '#9CA3AF';
                           return (
                             <li key={it.id} className="flex gap-3.5 px-5 py-3">
@@ -161,16 +169,16 @@ export default function DetalleExperiencia({
                                 className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
                                 style={{ background: hexA(c, 0.12) }}
                               >
-                                <Icono n={meta?.icono ?? 'clock'} s={14} c={c} />
+                                <Icono n={(it.tipo && ICONO_TIPO[it.tipo]) || 'clock'} s={14} c={c} />
                               </span>
                               <div className="min-w-0">
                                 <p className="text-[15px] leading-snug text-gray-700">{it.texto}</p>
-                                {meta && (
+                                {etiqueta && (
                                   <p
                                     className="mt-0.5 text-[10px] font-extrabold uppercase tracking-wide"
                                     style={{ color: c }}
                                   >
-                                    {meta.label}
+                                    {etiqueta}
                                   </p>
                                 )}
                               </div>
@@ -183,8 +191,7 @@ export default function DetalleExperiencia({
                 </ol>
 
                 <p className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-semibold text-emerald-900">
-                  Guías, cocineras y anfitriones son de las comunidades por las que vas a pasar. Al
-                  viajar con nosotros, el turismo se queda en la sierra.
+                  {d.cierreDetalle}
                 </p>
               </section>
             )}
@@ -195,43 +202,45 @@ export default function DetalleExperiencia({
             <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
               {paquete.precio > 0 ? (
                 <p>
-                  <span className="text-sm text-gray-400">desde </span>
+                  <span className="text-sm text-gray-400">{d.desde} </span>
                   <span className="text-3xl font-extrabold text-gray-900">
                     ${paquete.precio.toLocaleString('es-MX')}
                   </span>
-                  <span className="text-sm text-gray-400"> / persona</span>
+                  <span className="text-sm text-gray-400"> {d.porPersona}</span>
                 </p>
               ) : (
-                <p className="text-xl font-extrabold text-gray-900">Cotización a medida</p>
+                <p className="text-xl font-extrabold text-gray-900">{d.cotizacion}</p>
               )}
 
-              <p className="mt-2 text-sm text-gray-500">
-                Guía local, alimentos y hospedaje en cabañas de la comunidad.
-              </p>
+              <p className="mt-2 text-sm text-gray-500">{d.incluye}</p>
 
               <button
                 onClick={() => setAbierto(true)}
                 className="mt-5 w-full rounded-xl px-5 py-3.5 text-sm font-bold text-white shadow-sm transition hover:brightness-110"
                 style={{ background: color }}
               >
-                Solicitar reserva
+                {d.solicitarReserva}
               </button>
 
               <a
-                href={`https://wa.me/5219515148271?text=${encodeURIComponent(`Hola, me interesa la experiencia "${paquete.nombre}".`)}`}
+                href={`https://wa.me/5219515148271?text=${encodeURIComponent(
+                  lang === 'es'
+                    ? `Hola, me interesa la experiencia "${paquete.nombre}".`
+                    : `Hi, I'm interested in the "${paquete.nombre}" experience.`
+                )}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 px-5 py-3.5 text-sm font-bold text-gray-700 transition hover:bg-gray-50"
               >
-                Preguntar por WhatsApp
+                {d.preguntarWhats}
               </a>
 
               <ul className="mt-6 space-y-2.5 border-t border-gray-100 pt-5">
                 {[
-                  'Guía de la comunidad',
-                  'Alimentos en comedores locales',
-                  itinerario.length > 1 ? 'Hospedaje en cabañas' : 'Actividades incluidas',
-                  'Anfitrión bilingüe disponible',
+                  d.inc1,
+                  d.inc2,
+                  itinerario.length > 1 ? d.inc3 : d.inc3b,
+                  d.inc4,
                 ].map((t) => (
                   <li key={t} className="flex items-center gap-2.5 text-sm text-gray-600">
                     <Icono n="check" s={14} c="#16A34A" />
@@ -246,6 +255,7 @@ export default function DetalleExperiencia({
 
       {abierto && (
         <ReservaForm
+          lang={lang}
           paqueteId={paquete.id}
           paqueteNombre={paquete.nombre}
           precio={paquete.precio}

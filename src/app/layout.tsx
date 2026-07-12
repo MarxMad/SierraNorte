@@ -6,6 +6,13 @@ export const metadata: Metadata = {
   description:
     'Turismo comunitario en la Sierra Norte de Oaxaca. Caminatas entre bosques de pino-encino, ' +
     'cabañas y cocina de los pueblos zapotecos de los Pueblos Mancomunados.',
+  // Le dice a Google que el sitio existe en dos idiomas y cuál es cada uno.
+  alternates: {
+    languages: {
+      es: '/',
+      en: '/en',
+    },
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
