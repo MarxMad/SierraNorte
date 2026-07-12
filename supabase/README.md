@@ -162,6 +162,42 @@ Detalle de Postgres que conviene saber: cuando el RLS frena un `update`, no lanz
 `insert`. Por eso la UI **también** esconde los botones según el rol: la base es la
 que manda, pero la interfaz no debe ofrecer lo que va a rebotar.
 
+## Contabilidad y comprobantes (14 y 15)
+
+El negocio: el turista nos paga a nosotros, nosotros le pagamos a las comunidades, y
+nosotros gestionamos los impuestos. Por eso las **dos caras de la factura** viven en un
+solo lugar — Banca → Contabilidad — y se cotejan solas.
+
+**Comprobantes.** Bucket `comprobantes`, **privado**. Guarda comprobantes de pago y
+archivos de facturas (PDF/XML/foto, máx. 10 MB). Se guarda la **ruta**, no una URL
+pública: para verlo se firma una URL que caduca a los 5 minutos (`urlComprobante`).
+Suben admin, finanzas y comunidad; borran sólo admin y finanzas.
+
+**Un hueco que se cerró.** `v_liquidacion_por_venta` mostraba `ingreso` — lo **vendido**
+(suma de `reservas.precio`) — pero nunca lo **cobrado**. Confirmar un pago en Banca no
+se reflejaba en Liquidación. Ahora la vista trae `cobrado`, `por_cobrar` y `cobrado_pct`,
+alimentados por los pagos confirmados de **cualquier** canal.
+
+**La base concentrada.** `v_contabilidad_movimientos` une en una sola tabla:
+
+| Flujo | De dónde sale | Factura |
+|---|---|---|
+| `ingreso` | Pagos confirmados | `pagos.con_factura` (el CFDI que se le emite al turista) |
+| `egreso` | Gastos | `gastos.con_factura` (la factura del proveedor) |
+
+No todos los clientes piden factura: el pago nace sin ella y el auxiliar contable la
+captura después (`folio_factura`, `subtotal`, `iva`). El precio de venta **ya trae el IVA
+dentro**, así que el total es lo cobrado y el IVA es la diferencia contra el subtotal.
+
+**El balance** (`v_contabilidad_kpis`), al día y por los dos lados:
+
+- **La caja**: `entro` − `salio` = `saldo`.
+- **El SAT**: `iva_trasladado` (el que cobraste) − `iva_acreditable` (el que pagaste) =
+  `iva_saldo`. Positivo = **a cargo**, le debes al SAT. Negativo = **a favor**.
+
+Sólo entra al cotejo fiscal lo que lleva factura. Lo que no, sigue contando en la caja
+pero no suma IVA por ningún lado — y la pantalla lo dice en voz alta.
+
 ## Precios
 
 **Todos los montos están en 0** porque el PDF del catálogo no traía tarifas. Hay que capturar:

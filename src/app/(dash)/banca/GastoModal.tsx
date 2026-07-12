@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Modal, Campo, inputCls, BtnPrimario, BtnGhost, Pill, Icono } from '@/components/ui';
+import SubirArchivo from '@/components/SubirArchivo';
 import { guardarGasto } from '@/app/acciones';
 import { type Gasto, type Comunidad, type Paquete, type Perfil, dinero, hexA } from '@/lib/tipos';
 
@@ -64,6 +65,7 @@ export default function GastoModal({
         subtotal: d.subtotal,
         iva: d.iva ?? 0,
         con_factura: d.con_factura,
+        archivo_url: d.archivo_url || null,
         paquete_id: d.paquete_id || null,
         comunidad_id: d.comunidad_id || null,
       });
@@ -237,6 +239,27 @@ export default function GastoModal({
             <Icono n="alert" s={11} c="#9CA3AF" />
             El total lo calcula la base de datos: subtotal + IVA.
           </p>
+        </div>
+
+        {/* El archivo del CFDI: es lo que sustenta el IVA acreditable */}
+        <div>
+          <span className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-gray-700">
+            <Icono n="paperclip" s={13} c="#9CA3AF" />
+            {d.con_factura ? 'Archivo de la factura (PDF / XML)' : 'Foto de la nota'}
+          </span>
+          <SubirArchivo
+            carpeta="gastos"
+            valor={d.archivo_url ?? null}
+            onSubido={(ruta) => set({ archivo_url: ruta })}
+            etiqueta={
+              d.con_factura ? 'Sube el PDF o el XML del CFDI' : 'Sube la foto del ticket o la nota'
+            }
+          />
+          {d.con_factura && !d.archivo_url && (
+            <p className="mt-1.5 text-[11px] font-semibold text-gray-400">
+              Sin el archivo, el IVA de esta factura no tiene con qué sustentarse ante el SAT.
+            </p>
+          )}
         </div>
 
         {error && (

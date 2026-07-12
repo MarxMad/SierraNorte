@@ -1,7 +1,29 @@
 import { exigirAcceso } from '@/lib/sesion';
 import { createClient } from '@/lib/supabase/server';
-import type { Pago, Reserva } from '@/lib/tipos';
+import type {
+  Pago,
+  Reserva,
+  Gasto,
+  Comunidad,
+  Paquete,
+  MovimientoContable,
+  ContabilidadKpis,
+} from '@/lib/tipos';
 import BancaVista from './BancaVista';
+
+const KPIS_VACIOS: ContabilidadKpis = {
+  entro: 0,
+  salio: 0,
+  saldo: 0,
+  facturado_ventas: 0,
+  facturado_gastos: 0,
+  iva_trasladado: 0,
+  iva_acreditable: 0,
+  iva_saldo: 0,
+  ingresos_sin_factura: 0,
+  gastos_sin_factura: 0,
+  sin_archivo: 0,
+};
 
 export default async function BancaPage({
   searchParams,
@@ -12,15 +34,32 @@ export default async function BancaPage({
   const { v = 'pagos', q = '' } = await searchParams;
   const supabase = await createClient();
 
-  const [{ data: pagos }, { data: kpis }, { data: resumen }, { data: porComunidad }, { data: rent }, { data: reservas }] =
-    await Promise.all([
-      supabase.from('v_banca_pagos').select('*').order('fecha', { ascending: false }),
-      supabase.from('v_banca_kpis').select('*').single(),
-      supabase.from('v_resumen_financiero').select('*').single(),
-      supabase.from('v_gastos_por_comunidad').select('*'),
-      supabase.from('v_rentabilidad_paquetes').select('*'),
-      supabase.from('v_reservas').select('id, codigo, nombre, precio, saldo').order('codigo'),
-    ]);
+  const [
+    { data: pagos },
+    { data: kpis },
+    { data: resumen },
+    { data: porComunidad },
+    { data: rent },
+    { data: reservas },
+    { data: movimientos },
+    { data: contaKpis },
+    { data: gastos },
+    { data: comunidades },
+    { data: paquetes },
+  ] = await Promise.all([
+    supabase.from('v_banca_pagos').select('*').order('fecha', { ascending: false }),
+    supabase.from('v_banca_kpis').select('*').single(),
+    supabase.from('v_resumen_financiero').select('*').single(),
+    supabase.from('v_gastos_por_comunidad').select('*'),
+    supabase.from('v_rentabilidad_paquetes').select('*'),
+    supabase.from('v_reservas').select('id, codigo, nombre, precio, saldo').order('codigo'),
+    // La base concentrada: lo que entró y lo que salió, junto
+    supabase.from('v_contabilidad_movimientos').select('*').order('fecha', { ascending: false }),
+    supabase.from('v_contabilidad_kpis').select('*').single(),
+    supabase.from('gastos').select('*').order('fecha', { ascending: false }),
+    supabase.from('comunidades').select('*').order('orden'),
+    supabase.from('paquetes').select('id, nombre').neq('duracion', 'Servicios').order('nombre'),
+  ]);
 
   return (
     <BancaVista
@@ -33,6 +72,11 @@ export default async function BancaPage({
       porComunidad={porComunidad ?? []}
       rentabilidad={rent ?? []}
       reservas={(reservas ?? []) as Pick<Reserva, 'id' | 'codigo' | 'nombre' | 'precio' | 'saldo'>[]}
+      movimientos={(movimientos ?? []) as MovimientoContable[]}
+      contaKpis={(contaKpis as ContabilidadKpis) ?? KPIS_VACIOS}
+      gastos={(gastos ?? []) as Gasto[]}
+      comunidades={(comunidades ?? []) as Comunidad[]}
+      paquetes={(paquetes ?? []) as Pick<Paquete, 'id' | 'nombre'>[]}
     />
   );
 }

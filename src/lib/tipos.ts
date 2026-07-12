@@ -103,8 +103,51 @@ export interface Pago {
   plataforma: Plataforma | null;
   status: StatusPago;
   referencia: string | null;
+  comprobante_url: string | null;
   automatico: boolean;
   saldo_reserva: number;
+}
+
+// La factura de venta: no todos los clientes la piden.
+export interface FacturaVenta {
+  con_factura: boolean;
+  folio_factura: string | null;
+  subtotal: number | null;
+  iva: number | null;
+}
+
+// La base concentrada: lo que entró y lo que salió, en una sola tabla.
+// Es lo que el auxiliar contable cotejaba a mano.
+export interface MovimientoContable {
+  flujo: 'ingreso' | 'egreso';
+  id: string;
+  fecha: string;
+  referencia_interna: string;
+  contraparte: string; // el cliente, o el proveedor
+  concepto: string;
+  metodo: string;
+  canal: string;
+  con_factura: boolean;
+  folio: string | null;
+  subtotal: number;
+  iva: number;
+  total: number;
+  archivo_url: string | null;
+  comunidad_id: string | null;
+}
+
+export interface ContabilidadKpis {
+  entro: number;
+  salio: number;
+  saldo: number;
+  facturado_ventas: number;
+  facturado_gastos: number;
+  iva_trasladado: number;
+  iva_acreditable: number;
+  iva_saldo: number; // positivo = a cargo (se le debe al SAT); negativo = a favor
+  ingresos_sin_factura: number;
+  gastos_sin_factura: number;
+  sin_archivo: number;
 }
 
 // Cobro que no pasa por el banco (efectivo o pago en comunidad):
@@ -122,6 +165,7 @@ export interface CobroLiquidacion {
   metodo_pago: MetodoPago;
   status: StatusPago;
   referencia: string | null;
+  comprobante_url: string | null;
   automatico: boolean;
   precio_reserva: number;
   saldo_reserva: number;
@@ -152,6 +196,7 @@ export interface Gasto {
   iva: number;
   total: number;
   con_factura: boolean;
+  archivo_url: string | null;
   paquete_id: string | null;
   comunidad_id: string | null;
 }
@@ -185,7 +230,10 @@ export interface VentaLiquidacion {
   reservas: number;
   pax: number;
   ninos: number;
-  ingreso: number;
+  ingreso: number; // lo VENDIDO (suma de reservas.precio)
+  cobrado: number; // lo que YA entró: pagos confirmados de cualquier canal
+  por_cobrar: number;
+  cobrado_pct: number;
   costo: number;
   liquidado: number;
   pendiente: number;

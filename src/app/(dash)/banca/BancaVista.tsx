@@ -1,23 +1,33 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import Encabezado from '@/components/Encabezado';
 import { Icono, Pill, Avatar, Kpi, Vacio, BtnPrimario, BotonAccion, Barra } from '@/components/ui';
 import PagoModal from './PagoModal';
+import GastoModal from './GastoModal';
+import Contabilidad from './Contabilidad';
+import ComprobanteModal from '@/components/ComprobanteModal';
+import VerComprobante from '@/components/VerComprobante';
 import { confirmarPago } from '@/app/acciones';
 import {
   type Pago,
   type Reserva,
   type Perfil,
+  type Gasto,
+  type Comunidad,
+  type Paquete,
+  type MovimientoContable,
+  type ContabilidadKpis,
   COLOR_PAGO,
   COLOR_METODO,
   COLOR_PLATAFORMA,
   dinero,
 } from '@/lib/tipos';
-import { puedeEditarPagos } from '@/lib/permisos';
+import { puedeEditarPagos, puedeCapturarGastos } from '@/lib/permisos';
 
 const VISTAS = [
   { id: 'pagos', label: 'Pagos', icono: 'card' },
+  { id: 'contabilidad', label: 'Contabilidad', icono: 'receipt' },
   { id: 'resumen', label: 'Resumen', icono: 'chart' },
   { id: 'rentabilidad', label: 'Rentabilidad', icono: 'trendUp' },
 ];
@@ -37,6 +47,11 @@ export default function BancaVista({
   porComunidad,
   rentabilidad,
   reservas,
+  movimientos,
+  contaKpis,
+  gastos,
+  comunidades,
+  paquetes,
 }: {
   perfil: Perfil;
   vista: string;
@@ -47,10 +62,17 @@ export default function BancaVista({
   porComunidad: PorComunidad[];
   rentabilidad: Rent[];
   reservas: Pick<Reserva, 'id' | 'codigo' | 'nombre' | 'precio' | 'saldo'>[];
+  movimientos: MovimientoContable[];
+  contaKpis: ContabilidadKpis;
+  gastos: Gasto[];
+  comunidades: Comunidad[];
+  paquetes: Pick<Paquete, 'id' | 'nombre'>[];
 }) {
   const [editando, setEditando] = useState<Partial<Pago> | null>(null);
-  const [, startTransition] = useTransition();
+  const [confirmando, setConfirmando] = useState<Pago | null>(null);
+  const [editandoGasto, setEditandoGasto] = useState<Partial<Gasto> | null>(null);
   const editable = puedeEditarPagos(perfil.rol);
+  const puedeCapturar = puedeCapturarGastos(perfil.rol);
   const q = busqueda.toLowerCase();
 
   const ps = pagos.filter(
@@ -60,14 +82,6 @@ export default function BancaVista({
       p.codigo.toLowerCase().includes(q) ||
       (p.paquete ?? '').toLowerCase().includes(q)
   );
-
-  const confirmar = (id: string) => {
-    const ref = prompt('Referencia o n° de transacción (opcional):') ?? undefined;
-    startTransition(async () => {
-      const r = await confirmarPago(id, ref);
-      if (!r.ok) alert(r.error);
-    });
-  };
 
   const maxGasto = Math.max(...porComunidad.map((c) => Number(c.total)), 1);
 
@@ -79,21 +93,30 @@ export default function BancaVista({
         vistas={VISTAS}
         vistaActiva={vista}
         acciones={
-          vista === 'pagos' &&
-          editable && (
-            <BtnPrimario
-              onClick={() =>
-                setEditando({
-                  metodo_pago: 'Transfer/Tarjeta',
-                  plataforma: 'WeTravel',
-                  status: 'Pendiente',
-                })
-              }
-            >
-              <Icono n="plus" s={15} c="#fff" />
-              Registrar pago
-            </BtnPrimario>
-          )
+          <>
+            {vista === 'pagos' && editable && (
+              <BtnPrimario
+                onClick={() =>
+                  setEditando({
+                    metodo_pago: 'Transfer/Tarjeta',
+                    plataforma: 'WeTravel',
+                    status: 'Pendiente',
+                  })
+                }
+              >
+                <Icono n="plus" s={15} c="#fff" />
+                Registrar pago
+              </BtnPrimario>
+            )}
+            {vista === 'contabilidad' && puedeCapturar && (
+              <BtnPrimario
+                onClick={() => setEditandoGasto({ con_factura: true, subtotal: 0, iva: 0 })}
+              >
+                <Icono n="plus" s={15} c="#fff" />
+                Agregar factura
+              </BtnPrimario>
+            )}
+          </>
         }
       />
 
@@ -160,7 +183,7 @@ export default function BancaVista({
                           <div className="flex items-center gap-1.5">
                             {p.status !== 'Confirmado' && editable && (
                               <button
-                                onClick={() => confirmar(p.id)}
+                                onClick={() => setConfirmando(p)}
                                 className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700"
                               >
                                 <Icono n="checkCircle" s={14} c="#fff" />
@@ -173,6 +196,7 @@ export default function BancaVista({
                                 Confirmado
                               </span>
                             )}
+                            <VerComprobante ruta={p.comprobante_url} />
                             {editable && (
                               <BotonAccion icono="edit" titulo="Editar pago" onClick={() => setEditando(p)} />
                             )}
@@ -185,6 +209,19 @@ export default function BancaVista({
               </div>
             )}
           </>
+        )}
+
+        {/* ---------------- CONTABILIDAD ---------------- */}
+        {vista === 'contabilidad' && (
+          <Contabilidad
+            movimientos={movimientos}
+            kpis={contaKpis}
+            gastos={gastos}
+            comunidades={comunidades}
+            perfil={perfil}
+            busqueda={q}
+            onEditarGasto={setEditandoGasto}
+          />
         )}
 
         {vista === 'resumen' && (
@@ -270,6 +307,32 @@ export default function BancaVista({
 
       {editando && (
         <PagoModal pago={editando} reservas={reservas} onClose={() => setEditando(null)} />
+      )}
+
+      {confirmando && (
+        <ComprobanteModal
+          codigo={confirmando.codigo}
+          cliente={confirmando.cliente}
+          paquete={confirmando.paquete}
+          metodo={confirmando.metodo_pago}
+          monto={confirmando.monto}
+          saldo={confirmando.saldo_reserva}
+          comprobante={confirmando.comprobante_url}
+          onConfirmar={({ referencia, comprobante }) =>
+            confirmarPago(confirmando.id, referencia ?? undefined, comprobante)
+          }
+          onClose={() => setConfirmando(null)}
+        />
+      )}
+
+      {editandoGasto && (
+        <GastoModal
+          gasto={editandoGasto}
+          comunidades={comunidades}
+          paquetes={paquetes}
+          perfil={perfil}
+          onClose={() => setEditandoGasto(null)}
+        />
       )}
     </>
   );

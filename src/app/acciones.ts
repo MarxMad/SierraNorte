@@ -21,6 +21,9 @@ function traducir(msg: string) {
     return 'La plataforma sólo aplica a pagos con transferencia o tarjeta.';
   if (msg.includes('duplicate key') && msg.includes('codigo'))
     return 'Ya existe una reserva con ese código.';
+  if (msg.includes('chk_pago_factura'))
+    return 'Con factura necesitas el folio del CFDI y el subtotal.';
+  if (msg.includes('chk_factura')) return 'Con factura necesitas el folio.';
   return msg;
 }
 
@@ -110,15 +113,24 @@ export async function guardarPago(datos: Record<string, unknown>): Promise<Resul
   return fallo(error);
 }
 
-export async function confirmarPago(id: string, referencia?: string): Promise<Resultado> {
+export async function confirmarPago(
+  id: string,
+  referencia?: string,
+  comprobante?: string | null
+): Promise<Resultado> {
   const supabase = await createClient();
-  const { error } = await supabase
-    .from('pagos')
-    .update({ status: 'Confirmado', referencia: referencia || null })
-    .eq('id', id);
+  const campos: Record<string, unknown> = {
+    status: 'Confirmado',
+    referencia: referencia || null,
+  };
+  // Si no subieron comprobante, se conserva el que ya tuviera
+  if (comprobante) campos.comprobante_url = comprobante;
+
+  const { error } = await supabase.from('pagos').update(campos).eq('id', id);
 
   revalidatePath('/banca');
   revalidatePath('/ventas');
+  revalidatePath('/liquidacion');
   return fallo(error);
 }
 
@@ -127,10 +139,17 @@ export async function confirmarPago(id: string, referencia?: string): Promise<Re
 // Se valida el dinero que sí llegó: si el cliente entregó menos de lo
 // esperado, se confirma por el monto real y la reserva queda con saldo.
 // ---------------------------------------------------------------------
-export async function validarCobro(id: string, monto?: number): Promise<Resultado> {
+export async function validarCobro(
+  id: string,
+  monto?: number,
+  referencia?: string,
+  comprobante?: string | null
+): Promise<Resultado> {
   const supabase = await createClient();
   const campos: Record<string, unknown> = { status: 'Confirmado' };
   if (monto && monto > 0) campos.monto = monto;
+  if (referencia) campos.referencia = referencia;
+  if (comprobante) campos.comprobante_url = comprobante;
 
   const { error } = await supabase.from('pagos').update(campos).eq('id', id);
 
@@ -138,6 +157,41 @@ export async function validarCobro(id: string, monto?: number): Promise<Resultad
   revalidatePath('/ventas');
   revalidatePath('/banca');
   return fallo(error);
+}
+
+// ---------------------------------------------------------------------
+// FACTURA DE VENTA — el CFDI que se le emite al turista.
+// No todos la piden; por eso el pago nace sin factura y el auxiliar
+// contable la captura después. Su IVA es el "trasladado".
+// ---------------------------------------------------------------------
+export async function facturarPago(
+  id: string,
+  factura: {
+    con_factura: boolean;
+    folio_factura: string | null;
+    subtotal: number | null;
+    iva: number | null;
+  }
+): Promise<Resultado> {
+  const supabase = await createClient();
+  const { error } = await supabase.from('pagos').update(factura).eq('id', id);
+
+  revalidatePath('/banca');
+  return fallo(error);
+}
+
+// ---------------------------------------------------------------------
+// COMPROBANTES — el bucket es privado, así que para ver un archivo se
+// firma una URL temporal. Nunca se expone la ruta pública.
+// ---------------------------------------------------------------------
+export async function urlComprobante(ruta: string): Promise<{ url?: string; error?: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.storage
+    .from('comprobantes')
+    .createSignedUrl(ruta, 60 * 5); // 5 minutos
+
+  if (error) return { error: error.message };
+  return { url: data.signedUrl };
 }
 
 export async function borrarPago(id: string): Promise<Resultado> {

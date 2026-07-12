@@ -2,16 +2,15 @@
 
 import { useState, useTransition } from 'react';
 import Encabezado from '@/components/Encabezado';
-import { Icono, Pill, Kpi, Vacio, BtnPrimario, BotonAccion, Barra } from '@/components/ui';
-import GastoModal from './GastoModal';
-import { marcarLiquidado, borrarGasto, validarCobro } from '@/app/acciones';
+import { Icono, Pill, Kpi, Vacio, Barra } from '@/components/ui';
+import ComprobanteModal from '@/components/ComprobanteModal';
+import VerComprobante from '@/components/VerComprobante';
+import { marcarLiquidado, validarCobro } from '@/app/acciones';
 import {
   type VentaLiquidacion,
   type ConceptoLiquidacion,
   type CobroLiquidacion,
-  type Gasto,
   type Comunidad,
-  type Paquete,
   type Perfil,
   COLOR_LIQ,
   COLOR_DURACION,
@@ -22,7 +21,7 @@ import {
   rango,
   hexA,
 } from '@/lib/tipos';
-import { puedeLiquidar, puedeCapturarGastos, puedeEditarGasto } from '@/lib/permisos';
+import { puedeLiquidar } from '@/lib/permisos';
 
 type CobrosKpis = { por_validar: number; validado: number; pendientes: number; cobros: number };
 
@@ -34,9 +33,7 @@ export default function LiquidacionVista({
   conceptos,
   cobros,
   cobrosKpis,
-  gastos,
   comunidades,
-  paquetes,
 }: {
   perfil: Perfil;
   vista: string;
@@ -45,20 +42,18 @@ export default function LiquidacionVista({
   conceptos: ConceptoLiquidacion[];
   cobros: CobroLiquidacion[];
   cobrosKpis: CobrosKpis;
-  gastos: Gasto[];
   comunidades: Comunidad[];
-  paquetes: Pick<Paquete, 'id' | 'nombre'>[];
 }) {
   const [abierto, setAbierto] = useState<Record<string, boolean>>({});
-  const [editandoGasto, setEditandoGasto] = useState<Partial<Gasto> | null>(null);
   const [, startTransition] = useTransition();
 
   const liquidable = puedeLiquidar(perfil.rol);
-  const puedeCapturar = puedeCapturarGastos(perfil.rol);
   const q = busqueda.toLowerCase();
 
   // Todos entran a todas las pestañas. Quién puede MOVER cada cosa se
   // decide adentro, botón por botón.
+  // Las facturas se fueron a Banca → Contabilidad: es donde vive el
+  // auxiliar contable, y así no se capturan en dos lugares distintos.
   const VISTAS = [
     { id: 'ventas', label: 'Por venta', icono: 'receipt' },
     { id: 'concepto', label: 'Por concepto', icono: 'clipboard' },
@@ -68,7 +63,6 @@ export default function LiquidacionVista({
       icono: 'card',
     },
     { id: 'comunidad', label: 'Por comunidad', icono: 'mountain' },
-    { id: 'gastos', label: 'Gastos', icono: 'wallet' },
   ];
 
   const toggle = (c: ConceptoLiquidacion) => {
@@ -82,6 +76,7 @@ export default function LiquidacionVista({
   const totalCosto = ventas.reduce((a, v) => a + v.costo, 0);
   const totalPend = ventas.reduce((a, v) => a + v.pendiente, 0);
   const totalIngreso = ventas.reduce((a, v) => a + v.ingreso, 0);
+  const totalCobrado = ventas.reduce((a, v) => a + v.cobrado, 0);
 
   return (
     <>
@@ -90,15 +85,6 @@ export default function LiquidacionVista({
         sub="Pagos directos a comedores, comunidades y prestadores"
         vistas={VISTAS}
         vistaActiva={vista}
-        acciones={
-          vista === 'gastos' &&
-          puedeCapturar && (
-            <BtnPrimario onClick={() => setEditandoGasto({ con_factura: true, subtotal: 0, iva: 0 })}>
-              <Icono n="plus" s={15} c="#fff" />
-              Agregar gasto
-            </BtnPrimario>
-          )
-        }
       />
 
       <div className="min-h-0 flex-1 overflow-auto px-6 py-4">
@@ -106,7 +92,8 @@ export default function LiquidacionVista({
         {vista === 'ventas' && (
           <>
             <div className="mb-4 flex flex-wrap gap-3">
-              <Kpi icono="wallet" label="Ingreso de ventas" valor={dinero(totalIngreso)} color="#16A34A" />
+              <Kpi icono="clipboard" label="Vendido" valor={dinero(totalIngreso)} color="#6B7280" />
+              <Kpi icono="wallet" label="Cobrado" valor={dinero(totalCobrado)} color="#16A34A" />
               <Kpi icono="receipt" label="Costo a liquidar" valor={dinero(totalCosto)} color="#5B21B6" />
               <Kpi icono="clock" label="Pendiente de pago" valor={dinero(totalPend)} color="#FB923C" />
               <Kpi
@@ -155,7 +142,12 @@ export default function LiquidacionVista({
                           </p>
                         </div>
 
-                        <Cifra label="Ingreso" valor={dinero(v.ingreso)} color="#16A34A" />
+                        <Cifra label="Vendido" valor={dinero(v.ingreso)} color="#6B7280" />
+                        <Cifra
+                          label="Cobrado"
+                          valor={dinero(v.cobrado)}
+                          color={v.cobrado_pct === 100 ? '#16A34A' : '#FB923C'}
+                        />
                         <Cifra label="A liquidar" valor={dinero(v.costo)} color="#111827" />
                         <div className="w-24">
                           <p className="mb-1 text-[10px] font-bold uppercase text-gray-400">
@@ -237,6 +229,12 @@ export default function LiquidacionVista({
                           ))}
 
                           <div className="flex flex-wrap items-center justify-end gap-4 rounded-lg bg-white px-4 py-2.5 text-xs font-bold">
+                            {v.por_cobrar > 0 && (
+                              <span className="mr-auto text-gray-500">
+                                Falta cobrar:{' '}
+                                <b className="text-amber-600">{dinero(v.por_cobrar)}</b>
+                              </span>
+                            )}
                             <span className="text-gray-500">
                               Liquidado: <b className="text-emerald-600">{dinero(v.liquidado)}</b>
                             </span>
@@ -407,32 +405,7 @@ export default function LiquidacionVista({
           />
         )}
 
-        {/* ---------------- GASTOS ---------------- */}
-        {vista === 'gastos' && (
-          <GastosTabla
-            gastos={gastos.filter(
-              (g) =>
-                !q ||
-                g.proveedor.toLowerCase().includes(q) ||
-                g.concepto.toLowerCase().includes(q) ||
-                (g.folio ?? '').toLowerCase().includes(q)
-            )}
-            comunidades={comunidades}
-            perfil={perfil}
-            onEditar={setEditandoGasto}
-          />
-        )}
       </div>
-
-      {editandoGasto && (
-        <GastoModal
-          gasto={editandoGasto}
-          comunidades={comunidades}
-          paquetes={paquetes}
-          perfil={perfil}
-          onClose={() => setEditandoGasto(null)}
-        />
-      )}
     </>
   );
 }
@@ -451,28 +424,7 @@ function CobrosTabla({
   kpis: CobrosKpis;
   validable: boolean;
 }) {
-  const [montos, setMontos] = useState<Record<string, string>>({});
-  const [pendiente, setPendiente] = useState<string | null>(null);
-  const [, startTransition] = useTransition();
-
-  const validar = (c: CobroLiquidacion) => {
-    const escrito = Number(montos[c.id] ?? c.monto);
-    if (!escrito || escrito <= 0) return alert('El monto debe ser mayor a cero.');
-    if (
-      !confirm(
-        `¿Confirmas que recibiste ${dinero(escrito)} de ${c.cliente} (${c.codigo})?\n` +
-          `Se registra como ingreso y baja el saldo de la reserva.`
-      )
-    )
-      return;
-
-    setPendiente(c.id);
-    startTransition(async () => {
-      const r = await validarCobro(c.id, escrito);
-      setPendiente(null);
-      if (!r.ok) alert(r.error);
-    });
-  };
+  const [validando, setValidando] = useState<CobroLiquidacion | null>(null);
 
   if (!cobros.length)
     return (
@@ -499,8 +451,8 @@ function CobrosTabla({
               <th className="px-3 py-2.5">Cliente</th>
               <th className="px-3 py-2.5">Salida</th>
               <th className="px-3 py-2.5">Método</th>
-              <th className="px-3 py-2.5">Esperado</th>
-              <th className="px-3 py-2.5">Recibido</th>
+              <th className="px-3 py-2.5">Monto</th>
+              <th className="px-3 py-2.5">Comprobante</th>
               <th className="px-3 py-2.5">Status</th>
               <th className="px-3 py-2.5">Acción</th>
             </tr>
@@ -527,19 +479,7 @@ function CobrosTabla({
                   </td>
                   <td className="px-3 py-2.5 font-extrabold text-gray-900">{dinero(c.monto)}</td>
                   <td className="px-3 py-2.5">
-                    {porValidar && validable ? (
-                      <input
-                        type="number"
-                        step="0.01"
-                        className="w-28 rounded-lg border border-gray-200 px-2 py-1.5 text-xs font-bold text-gray-800 outline-none focus:border-[#5B21B6]"
-                        value={montos[c.id] ?? String(c.monto)}
-                        onChange={(e) => setMontos((m) => ({ ...m, [c.id]: e.target.value }))}
-                      />
-                    ) : (
-                      <span className="text-xs font-semibold text-gray-400">
-                        {c.status === 'Confirmado' ? dinero(c.monto) : '—'}
-                      </span>
-                    )}
+                    <VerComprobante ruta={c.comprobante_url} />
                   </td>
                   <td className="px-3 py-2.5">
                     <Pill texto={c.status} color={COLOR_PAGO[c.status]} solid={c.status === 'Confirmado'} />
@@ -548,12 +488,11 @@ function CobrosTabla({
                     {porValidar ? (
                       validable ? (
                         <button
-                          onClick={() => validar(c)}
-                          disabled={pendiente === c.id}
-                          className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                          onClick={() => setValidando(c)}
+                          className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-emerald-700"
                         >
                           <Icono n="check" s={12} c="#fff" />
-                          {pendiente === c.id ? 'Validando…' : 'Validar'}
+                          Validar
                         </button>
                       ) : (
                         <span className="text-xs text-gray-400">Sólo finanzas</span>
@@ -568,120 +507,23 @@ function CobrosTabla({
           </tbody>
         </table>
       </div>
-    </>
-  );
-}
 
-function GastosTabla({
-  gastos,
-  comunidades,
-  perfil,
-  onEditar,
-}: {
-  gastos: Gasto[];
-  comunidades: Comunidad[];
-  perfil: Perfil;
-  onEditar: (g: Gasto) => void;
-}) {
-  const [, startTransition] = useTransition();
-  const subtotal = gastos.reduce((a, g) => a + Number(g.subtotal), 0);
-  const iva = gastos.reduce((a, g) => a + Number(g.iva), 0);
-  const total = gastos.reduce((a, g) => a + Number(g.total), 0);
-  const conFactura = gastos.filter((g) => g.con_factura).length;
-
-  const eliminar = (g: Gasto) => {
-    if (!confirm(`¿Eliminar el gasto de ${g.proveedor}?`)) return;
-    startTransition(async () => {
-      const r = await borrarGasto(g.id);
-      if (!r.ok) alert(r.error);
-    });
-  };
-
-  if (!gastos.length)
-    return <Vacio titulo="Sin gastos registrados" sub="Da de alta una factura con Agregar gasto." icono="wallet" />;
-
-  return (
-    <>
-      <div className="mb-4 flex flex-wrap gap-3">
-        <Kpi icono="note" label="Subtotal" valor={dinero(subtotal)} color="#6B7280" />
-        <Kpi icono="percent" label="IVA" valor={dinero(iva)} color="#2563EB" />
-        <Kpi icono="wallet" label="Total gastado" valor={dinero(total)} color="#FB923C" />
-        <Kpi
-          icono="checkCircle"
-          label="Con factura"
-          valor={`${conFactura} de ${gastos.length}`}
-          color="#16A34A"
+      {validando && (
+        <ComprobanteModal
+          codigo={validando.codigo}
+          cliente={validando.cliente}
+          paquete={validando.paquete}
+          metodo={validando.metodo_pago}
+          monto={validando.monto}
+          saldo={validando.saldo_reserva}
+          montoEditable
+          comprobante={validando.comprobante_url}
+          onConfirmar={({ monto, referencia, comprobante }) =>
+            validarCobro(validando.id, monto, referencia ?? undefined, comprobante)
+          }
+          onClose={() => setValidando(null)}
         />
-      </div>
-
-      <div className="overflow-auto rounded-xl border border-gray-200 bg-white">
-        <table className="w-full min-w-[1100px] text-sm">
-          <thead className="bg-gray-50 text-left text-[11px] font-bold uppercase text-gray-500">
-            <tr>
-              <th className="px-3 py-2.5">Fecha</th>
-              <th className="px-3 py-2.5">Proveedor</th>
-              <th className="px-3 py-2.5">Concepto</th>
-              <th className="px-3 py-2.5">Folio</th>
-              <th className="px-3 py-2.5">Comunidad</th>
-              <th className="px-3 py-2.5">Subtotal</th>
-              <th className="px-3 py-2.5">IVA</th>
-              <th className="px-3 py-2.5">Total</th>
-              <th className="px-3 py-2.5">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {gastos.map((g) => {
-              const com = comunidades.find((c) => c.id === g.comunidad_id);
-              // Cada quien mueve lo suyo: el coordinador sólo toca las
-              // facturas de su pueblo, aunque vea las de todos.
-              const editable = puedeEditarGasto(perfil.rol, perfil.comunidad_id, g.comunidad_id);
-              return (
-                <tr key={g.id} className="border-t border-gray-100 hover:bg-gray-50">
-                  <td className="px-3 py-2.5 text-xs font-semibold text-gray-600">{g.fecha}</td>
-                  <td className="px-3 py-2.5 font-bold text-gray-800">{g.proveedor}</td>
-                  <td className="px-3 py-2.5 text-xs text-gray-600">{g.concepto}</td>
-                  <td className="px-3 py-2.5">
-                    {g.con_factura && g.folio ? (
-                      <span className="rounded bg-violet-50 px-2 py-0.5 font-mono text-[11px] font-bold text-[#5B21B6]">
-                        {g.folio}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-gray-400">Sin factura</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2.5">
-                    {com ? <Pill texto={com.nombre} color={com.color} /> : <span className="text-gray-300">—</span>}
-                  </td>
-                  <td className="px-3 py-2.5 text-gray-600">{dinero(g.subtotal)}</td>
-                  <td className="px-3 py-2.5 text-gray-600">{dinero(g.iva)}</td>
-                  <td className="px-3 py-2.5 font-extrabold text-gray-900">{dinero(g.total)}</td>
-                  <td className="px-3 py-2.5">
-                    {editable ? (
-                      <div className="flex gap-1">
-                        <BotonAccion icono="edit" titulo="Editar" onClick={() => onEditar(g)} />
-                        <BotonAccion icono="trash" titulo="Eliminar" color="#DC2626" onClick={() => eliminar(g)} />
-                      </div>
-                    ) : (
-                      <span className="text-xs text-gray-400">—</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-          <tfoot>
-            <tr className="border-t-2 border-gray-200 bg-gray-50 font-extrabold">
-              <td colSpan={5} className="px-3 py-3 text-right text-[11px] uppercase text-gray-500">
-                Totales
-              </td>
-              <td className="px-3 py-3 text-gray-700">{dinero(subtotal)}</td>
-              <td className="px-3 py-3 text-blue-600">{dinero(iva)}</td>
-              <td className="px-3 py-3 text-[#5B21B6]">{dinero(total)}</td>
-              <td />
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+      )}
     </>
   );
 }
