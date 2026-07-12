@@ -8,23 +8,40 @@ import type { Rol } from './tipos';
 
 export type Seccion = 'ventas' | 'comunidades' | 'liquidacion' | 'banca' | 'calendario' | 'admin';
 
+// La información es de todos: cualquier rol ENTRA a toda la operación.
+// Usuarios se queda fuera: no es info de la operación, es el control de
+// quién puede entrar y con qué permisos.
+const OPERACION: Seccion[] = ['ventas', 'comunidades', 'liquidacion', 'banca', 'calendario'];
+
 const ACCESO: Record<Rol, Seccion[]> = {
-  admin: ['ventas', 'comunidades', 'liquidacion', 'banca', 'calendario', 'admin'],
-  ventas: ['ventas', 'comunidades', 'calendario'],
-  comunidad: ['comunidades', 'liquidacion'],
-  finanzas: ['banca', 'liquidacion', 'ventas', 'calendario'],
+  admin: [...OPERACION, 'admin'],
+  ventas: OPERACION,
+  comunidad: OPERACION,
+  finanzas: OPERACION,
 };
 
 export const puedeVer = (rol: Rol, seccion: Seccion) => ACCESO[rol]?.includes(seccion) ?? false;
 
 export const seccionesDe = (rol: Rol) => ACCESO[rol] ?? [];
 
-// Escritura
+// -----------------------------------------------------------------
+// Escritura — aquí sí, cada quien mueve lo suyo.
+// -----------------------------------------------------------------
 export const puedeEditarVentas = (rol: Rol) => rol === 'admin' || rol === 'ventas';
 export const puedeEditarPagos = (rol: Rol) => rol === 'admin' || rol === 'finanzas';
 export const puedeLiquidar = (rol: Rol) => rol === 'admin' || rol === 'finanzas';
-export const puedeEditarGastos = (rol: Rol) => rol === 'admin' || rol === 'finanzas' || rol === 'comunidad';
 export const puedeAdministrar = (rol: Rol) => rol === 'admin';
+
+// Gastos: finanzas los captura todos; el coordinador, sólo los de SU pueblo.
+// (Un gasto sin comunidad asignada es de la cooperativa: no es suyo.)
+export const puedeEditarGasto = (rol: Rol, miComunidad: string | null, comunidadDelGasto: string | null) =>
+  rol === 'admin' ||
+  rol === 'finanzas' ||
+  (rol === 'comunidad' && comunidadDelGasto !== null && miComunidad === comunidadDelGasto);
+
+// ¿Puede este usuario dar de alta gastos? (el botón "Agregar gasto")
+export const puedeCapturarGastos = (rol: Rol) =>
+  rol === 'admin' || rol === 'finanzas' || rol === 'comunidad';
 
 // El coordinador de comunidad sólo confirma el checklist de SU pueblo
 export const puedeCheckComunidad = (rol: Rol, miComunidad: string | null, comunidadId: string) =>

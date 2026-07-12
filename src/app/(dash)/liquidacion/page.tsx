@@ -1,6 +1,13 @@
 import { exigirAcceso } from '@/lib/sesion';
 import { createClient } from '@/lib/supabase/server';
-import type { VentaLiquidacion, ConceptoLiquidacion, Gasto, Comunidad, Paquete } from '@/lib/tipos';
+import type {
+  VentaLiquidacion,
+  ConceptoLiquidacion,
+  CobroLiquidacion,
+  Gasto,
+  Comunidad,
+  Paquete,
+} from '@/lib/tipos';
 import LiquidacionVista from './LiquidacionVista';
 
 export default async function LiquidacionPage({
@@ -12,14 +19,28 @@ export default async function LiquidacionPage({
   const { v = 'ventas', q = '' } = await searchParams;
   const supabase = await createClient();
 
-  const [{ data: ventas }, { data: conceptos }, { data: gastos }, { data: comunidades }, { data: paquetes }] =
-    await Promise.all([
-      supabase.from('v_liquidacion_por_venta').select('*').order('fecha_inicio'),
-      supabase.from('v_liquidacion_programada').select('*').order('dia'),
-      supabase.from('gastos').select('*').order('fecha', { ascending: false }),
-      supabase.from('comunidades').select('*').order('orden'),
-      supabase.from('paquetes').select('id, nombre').neq('duracion', 'Servicios').order('nombre'),
-    ]);
+  const [
+    { data: ventas },
+    { data: conceptos },
+    { data: cobros },
+    { data: cobrosKpis },
+    { data: gastos },
+    { data: comunidades },
+    { data: paquetes },
+  ] = await Promise.all([
+    supabase.from('v_liquidacion_por_venta').select('*').order('fecha_inicio'),
+    supabase.from('v_liquidacion_programada').select('*').order('dia'),
+    // Cobros en efectivo y pago en comunidad: los pendientes primero
+    supabase
+      .from('v_cobros_liquidacion')
+      .select('*')
+      .order('status')
+      .order('fecha', { ascending: false }),
+    supabase.from('v_cobros_kpis').select('*').single(),
+    supabase.from('gastos').select('*').order('fecha', { ascending: false }),
+    supabase.from('comunidades').select('*').order('orden'),
+    supabase.from('paquetes').select('id, nombre').neq('duracion', 'Servicios').order('nombre'),
+  ]);
 
   return (
     <LiquidacionVista
@@ -28,6 +49,8 @@ export default async function LiquidacionPage({
       busqueda={q}
       ventas={(ventas ?? []) as VentaLiquidacion[]}
       conceptos={(conceptos ?? []) as ConceptoLiquidacion[]}
+      cobros={(cobros ?? []) as CobroLiquidacion[]}
+      cobrosKpis={cobrosKpis ?? { por_validar: 0, validado: 0, pendientes: 0, cobros: 0 }}
       gastos={(gastos ?? []) as Gasto[]}
       comunidades={(comunidades ?? []) as Comunidad[]}
       paquetes={(paquetes ?? []) as Pick<Paquete, 'id' | 'nombre'>[]}

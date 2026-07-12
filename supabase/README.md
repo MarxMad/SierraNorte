@@ -70,10 +70,43 @@ select tipo, concepto, monto, pago_directo from v_liquidacion_programada where p
 - `v_liquidacion_por_comunidad` — lo que se le debe a cada pueblo
 
 **Banca** (absorbió Contabilidad)
-- `v_banca_pagos` — pagos con su reserva y paquete
-- `v_banca_kpis` — pendiente, confirmado, vencido, promedio
-- `v_resumen_financiero` — ingresos, gastos, utilidad, margen
+- `v_banca_pagos` — pagos con su reserva y paquete. **Sólo Transfer/Tarjeta**: es el canal del banco
+- `v_banca_kpis` — pendiente, confirmado, vencido, promedio (del canal de Banca)
+- `v_resumen_financiero` — ingresos, gastos, utilidad, margen (de **todos** los canales)
 - `v_gastos_por_comunidad`, `v_rentabilidad_paquetes`
+
+**Cobros que no tocan el banco** (se validan en Liquidación)
+- `v_cobros_liquidacion` — efectivo y pago en comunidad, con el saldo de la reserva
+- `v_cobros_kpis` — por validar, validado, cuántos siguen pendientes
+
+**Calendario**
+- `v_calendario` — salidas del paquete **y** reservas con fecha propia (`tipo` = `salida` | `reserva`)
+
+## La ruta de una reserva (12_ruta_reserva.sql)
+
+Al crear una reserva **no hay que capturar nada más**: la base genera su cobro
+Pendiente por el total y lo manda por su canal, según el método de pago.
+
+| Método | A dónde va | Quién lo cierra |
+|---|---|---|
+| Transfer/Tarjeta | **Banca** | Finanzas concilia contra el banco |
+| Efectivo | **Liquidación → Cobros** | Finanzas valida el dinero en mano |
+| Pago en comunidad | **Liquidación → Cobros** | Nunca toca el banco |
+
+Y en los tres casos la reserva entra al **Calendario** con sus propias fechas,
+aunque el paquete todavía no tenga fecha asignada.
+
+Detalles que te van a importar:
+
+- El canal **no se captura**: se deriva del método con `canal_pago(metodo_pago)`.
+- El cobro que nace de la reserva queda marcado con `pagos.automatico = true`.
+  Mientras siga **Pendiente**, sigue a la reserva: si ventas corrige el precio o el
+  método, el cobro se actualiza solo. En cuanto alguien lo confirma, deja de tocarse.
+- El trigger es `security definer` **a propósito**: el rol `ventas` puede crear
+  reservas pero NO escribir en `pagos`, y aun así su reserva debe generar el cobro.
+  Los valores los pone la base, no el que llama.
+- Se valida por el monto que **realmente** llegó: si el cliente entregó menos, se
+  confirma por esa cantidad y la reserva se queda con saldo.
 
 **Comunidades**
 - `v_operacion_comunidad` — el tramo de cada paquete en cada comunidad, con su checklist
@@ -103,6 +136,31 @@ select tipo, concepto, monto, pago_directo from v_liquidacion_programada where p
 **Pendiente:** el dashboard todavía lee de su estado local en memoria. El siguiente
 paso es reemplazar `this.state.packages` / `reservas` / `payments` / `expenses` por
 llamadas a `DB.*` en un `componentDidMount`. Avísame y lo hago.
+
+## Roles: todos ven, cada quien mueve lo suyo (13_todos_leen.sql)
+
+La información es de la cooperativa: **cualquier usuario con sesión lee toda la
+operación** — reservas (con precio y datos de contacto), pagos, cobros en efectivo,
+gastos, liquidación y calendario. Lo que cambia es quién puede **modificar**:
+
+| Rol | Modifica |
+|---|---|
+| `ventas` | Reservas, paquetes, itinerario, checklist general |
+| `finanzas` | Pagos, cobros, gastos, liquidación |
+| `comunidad` | El checklist y los gastos de **su** pueblo |
+| `admin` | Todo, y es el único que administra usuarios |
+
+Dos cosas que no se abrieron a propósito:
+
+- **`perfiles` sigue cerrado**: cada quien se ve sólo a sí mismo (el admin ve a todos).
+  Quién entra y con qué permisos no es info de la operación, es el control de acceso.
+- Un **gasto sin comunidad asignada** es de la cooperativa: el coordinador de un pueblo
+  no lo puede tocar, aunque sí lo vea.
+
+Detalle de Postgres que conviene saber: cuando el RLS frena un `update`, no lanza error
+— simplemente no toca ninguna fila (`UPDATE 0`). El error explícito sólo aparece en los
+`insert`. Por eso la UI **también** esconde los botones según el rol: la base es la
+que manda, pero la interfaz no debe ofrecer lo que va a rebotar.
 
 ## Precios
 

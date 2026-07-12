@@ -103,7 +103,43 @@ export interface Pago {
   plataforma: Plataforma | null;
   status: StatusPago;
   referencia: string | null;
+  automatico: boolean;
   saldo_reserva: number;
+}
+
+// Cobro que no pasa por el banco (efectivo o pago en comunidad):
+// se valida en Liquidación.
+export interface CobroLiquidacion {
+  id: string;
+  reserva_id: string;
+  codigo: string;
+  cliente: string;
+  paquete: string | null;
+  salida: string | null;
+  pax: number;
+  monto: number;
+  fecha: string;
+  metodo_pago: MetodoPago;
+  status: StatusPago;
+  referencia: string | null;
+  automatico: boolean;
+  precio_reserva: number;
+  saldo_reserva: number;
+}
+
+export interface EventoCalendario {
+  tipo: 'salida' | 'reserva';
+  id: string;
+  titulo: string;
+  duracion: Duracion;
+  fecha_inicio: string;
+  fecha_fin: string | null;
+  status: StatusOperativo;
+  pax: number;
+  codigo: string | null;
+  metodo_pago: MetodoPago | null;
+  paquete_id: string | null;
+  paquete: string | null;
 }
 
 export interface Gasto {

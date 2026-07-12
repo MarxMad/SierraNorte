@@ -29,12 +29,6 @@ export default function Sidebar({
   const [abierto, setAbierto] = useState(true);
   const secciones = seccionesDe(perfil.rol);
 
-  // El coordinador de comunidad sólo ve la suya
-  const misComunidades =
-    perfil.rol === 'comunidad'
-      ? comunidades.filter((c) => c.id === perfil.comunidad_id)
-      : comunidades;
-
   return (
     <aside className="flex h-full w-56 shrink-0 flex-col border-r border-gray-200 bg-gray-50">
       {/* Marca */}
@@ -77,8 +71,11 @@ export default function Sidebar({
                   </span>
                 </button>
                 {abierto &&
-                  misComunidades.map((c) => {
+                  comunidades.map((c) => {
                     const act = pathname === `/comunidades/${c.id}`;
+                    // Todos ven todos los pueblos; el coordinador sólo
+                    // confirma el checklist del suyo, y aquí se le marca.
+                    const mio = perfil.comunidad_id === c.id;
                     return (
                       <Link
                         key={c.id}
@@ -92,6 +89,15 @@ export default function Sidebar({
                           style={{ background: act ? '#fff' : c.color }}
                         />
                         <span className="truncate">{c.nombre}</span>
+                        {mio && (
+                          <span
+                            className={`ml-auto shrink-0 rounded px-1 py-0.5 text-[9px] font-extrabold ${
+                              act ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
+                            }`}
+                          >
+                            MÍO
+                          </span>
+                        )}
                       </Link>
                     );
                   })}

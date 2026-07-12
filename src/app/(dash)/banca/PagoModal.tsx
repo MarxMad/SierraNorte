@@ -6,7 +6,6 @@ import { guardarPago } from '@/app/acciones';
 import {
   type Pago,
   type Reserva,
-  METODOS,
   PLATAFORMAS,
   COLOR_METODO,
   COLOR_PLATAFORMA,
@@ -28,11 +27,13 @@ export default function PagoModal({
 }) {
   const nuevo = !pago.id;
   const [d, setD] = useState<Partial<Pago>>({
-    metodo_pago: 'Efectivo',
     status: 'Pendiente',
     fecha: new Date().toISOString().slice(0, 10),
     monto: 0,
     ...pago,
+    // Banca es el canal del banco: aquí todo es transferencia o tarjeta
+    metodo_pago: 'Transfer/Tarjeta',
+    plataforma: pago.plataforma ?? 'WeTravel',
   });
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -51,8 +52,8 @@ export default function PagoModal({
         reserva_id: d.reserva_id,
         monto: d.monto,
         fecha: d.fecha,
-        metodo_pago: d.metodo_pago,
-        plataforma: d.metodo_pago === 'Transfer/Tarjeta' ? (d.plataforma ?? 'WeTravel') : null,
+        metodo_pago: 'Transfer/Tarjeta',
+        plataforma: d.plataforma ?? 'WeTravel',
         status: d.status,
         referencia: d.referencia || null,
       });
@@ -128,40 +129,30 @@ export default function PagoModal({
         <div>
           <span className="mb-1.5 block text-xs font-bold text-gray-700">Método de pago</span>
           <div className="flex flex-wrap gap-2">
-            {METODOS.map((m) => (
-              <Opcion
-                key={m}
-                activa={d.metodo_pago === m}
-                color={COLOR_METODO[m]}
-                onClick={() =>
-                  set({
-                    metodo_pago: m,
-                    plataforma: m === 'Transfer/Tarjeta' ? (d.plataforma ?? 'WeTravel') : null,
-                  })
-                }
-              >
-                {m}
-              </Opcion>
-            ))}
+            <Opcion activa color={COLOR_METODO['Transfer/Tarjeta']} onClick={() => {}}>
+              Transfer/Tarjeta
+            </Opcion>
           </div>
+          <p className="mt-1.5 text-[11px] font-semibold text-gray-500">
+            Banca sólo lleva lo que pasa por el banco. El efectivo y el pago en comunidad se
+            validan en Liquidación → Cobros.
+          </p>
 
-          {d.metodo_pago === 'Transfer/Tarjeta' && (
-            <div className="mt-2.5 rounded-xl border border-blue-200 bg-blue-50/50 p-3">
-              <p className="mb-2 text-[11px] font-bold uppercase text-gray-500">Plataforma</p>
-              <div className="flex flex-wrap gap-2">
-                {PLATAFORMAS.map((p) => (
-                  <Opcion
-                    key={p}
-                    activa={d.plataforma === p}
-                    color={COLOR_PLATAFORMA[p]}
-                    onClick={() => set({ plataforma: p })}
-                  >
-                    {p}
-                  </Opcion>
-                ))}
-              </div>
+          <div className="mt-2.5 rounded-xl border border-blue-200 bg-blue-50/50 p-3">
+            <p className="mb-2 text-[11px] font-bold uppercase text-gray-500">Plataforma</p>
+            <div className="flex flex-wrap gap-2">
+              {PLATAFORMAS.map((p) => (
+                <Opcion
+                  key={p}
+                  activa={d.plataforma === p}
+                  color={COLOR_PLATAFORMA[p]}
+                  onClick={() => set({ plataforma: p })}
+                >
+                  {p}
+                </Opcion>
+              ))}
             </div>
-          )}
+          </div>
         </div>
 
         <Campo label="Referencia / n° de transacción" icono="note">

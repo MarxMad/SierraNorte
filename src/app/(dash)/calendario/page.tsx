@@ -1,15 +1,14 @@
 import { exigirAcceso } from '@/lib/sesion';
 import { createClient } from '@/lib/supabase/server';
-import type { VentaLiquidacion } from '@/lib/tipos';
+import type { EventoCalendario } from '@/lib/tipos';
 import CalendarioVista from './CalendarioVista';
 
 export default async function CalendarioPage() {
   await exigirAcceso('calendario');
   const supabase = await createClient();
-  const { data } = await supabase
-    .from('v_liquidacion_por_venta')
-    .select('*')
-    .order('fecha_inicio');
 
-  return <CalendarioVista salidas={(data ?? []) as VentaLiquidacion[]} />;
+  // v_calendario trae las salidas del paquete Y las reservas con fecha propia
+  const { data } = await supabase.from('v_calendario').select('*').order('fecha_inicio');
+
+  return <CalendarioVista eventos={(data ?? []) as EventoCalendario[]} />;
 }

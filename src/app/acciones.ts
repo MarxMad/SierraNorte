@@ -27,6 +27,9 @@ function traducir(msg: string) {
 // ---------------------------------------------------------------------
 // RESERVAS
 // ---------------------------------------------------------------------
+// Al guardar una reserva, la base genera sola su cobro Pendiente y lo manda
+// a Banca (Transfer/Tarjeta) o a Liquidación (efectivo / pago en comunidad),
+// y la reserva entra al calendario con sus fechas. Ver 12_ruta_reserva.sql.
 export async function guardarReserva(datos: Record<string, unknown>): Promise<Resultado> {
   const supabase = await createClient();
   const { id, ...resto } = datos as { id?: string } & Record<string, unknown>;
@@ -41,18 +44,24 @@ export async function guardarReserva(datos: Record<string, unknown>): Promise<Re
     ? await supabase.from('reservas').update(campos).eq('id', id)
     : await supabase.from('reservas').insert(campos);
 
-  revalidatePath('/ventas');
-  revalidatePath('/liquidacion');
-  revalidatePath('/calendario');
+  revalidarReserva();
   return fallo(error);
 }
 
 export async function borrarReserva(id: string): Promise<Resultado> {
   const supabase = await createClient();
   const { error } = await supabase.from('reservas').delete().eq('id', id);
-  revalidatePath('/ventas');
-  revalidatePath('/liquidacion');
+  revalidarReserva();
   return fallo(error);
+}
+
+// Una reserva toca las cuatro pantallas: ventas, su cobro (banca o
+// liquidación) y el calendario.
+function revalidarReserva() {
+  revalidatePath('/ventas');
+  revalidatePath('/banca');
+  revalidatePath('/liquidacion');
+  revalidatePath('/calendario');
 }
 
 // ---------------------------------------------------------------------
@@ -113,10 +122,29 @@ export async function confirmarPago(id: string, referencia?: string): Promise<Re
   return fallo(error);
 }
 
+// ---------------------------------------------------------------------
+// COBROS EN LIQUIDACIÓN — efectivo y pago en comunidad
+// Se valida el dinero que sí llegó: si el cliente entregó menos de lo
+// esperado, se confirma por el monto real y la reserva queda con saldo.
+// ---------------------------------------------------------------------
+export async function validarCobro(id: string, monto?: number): Promise<Resultado> {
+  const supabase = await createClient();
+  const campos: Record<string, unknown> = { status: 'Confirmado' };
+  if (monto && monto > 0) campos.monto = monto;
+
+  const { error } = await supabase.from('pagos').update(campos).eq('id', id);
+
+  revalidatePath('/liquidacion');
+  revalidatePath('/ventas');
+  revalidatePath('/banca');
+  return fallo(error);
+}
+
 export async function borrarPago(id: string): Promise<Resultado> {
   const supabase = await createClient();
   const { error } = await supabase.from('pagos').delete().eq('id', id);
   revalidatePath('/banca');
+  revalidatePath('/liquidacion');
   return fallo(error);
 }
 

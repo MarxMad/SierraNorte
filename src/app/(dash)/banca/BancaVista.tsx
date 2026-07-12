@@ -75,13 +75,21 @@ export default function BancaVista({
     <>
       <Encabezado
         titulo="Banca"
-        sub="Pagos, finanzas y reportes de la cooperativa"
+        sub="Transferencias y tarjeta · el efectivo se valida en Liquidación"
         vistas={VISTAS}
         vistaActiva={vista}
         acciones={
           vista === 'pagos' &&
           editable && (
-            <BtnPrimario onClick={() => setEditando({ metodo_pago: 'Efectivo', status: 'Pendiente' })}>
+            <BtnPrimario
+              onClick={() =>
+                setEditando({
+                  metodo_pago: 'Transfer/Tarjeta',
+                  plataforma: 'WeTravel',
+                  status: 'Pendiente',
+                })
+              }
+            >
               <Icono n="plus" s={15} c="#fff" />
               Registrar pago
             </BtnPrimario>
