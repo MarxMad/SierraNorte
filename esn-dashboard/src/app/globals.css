@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+/* El dashboard está diseñado en claro. Sin esto, el navegador pinta los campos
+   con el tema oscuro del sistema y el texto se vuelve blanco sobre blanco. */
+:root {
+  color-scheme: light;
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Campos de captura: siempre fondo blanco y letra oscura */
+input,
+select,
+textarea {
+  color: #111827;
+  background-color: #ffffff;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af;
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  background-color: #f9fafb;
+  color: #9ca3af;
+}
+
+/* El autocompletado de Chrome también pinta el fondo: lo neutralizamos */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #111827;
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+}
+
+/* Las opciones de los <select> en modo oscuro del sistema */
+option {
+  color: #111827;
+  background-color: #ffffff;
+}

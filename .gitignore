@@ -1,0 +1,24 @@
+# Dependencias y build
+node_modules/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Secretos — NUNCA subir
+.env
+.env.local
+.env*.local
+
+# El PDF original pesa 174 MB: excede el límite de GitHub (100 MB).
+# Se conserva en local; su contenido ya vive en la base de datos.
+*.pdf
+
+# macOS
+.DS_Store
+.thumbnail
+
+# Editores
+.vscode/
+.idea/
