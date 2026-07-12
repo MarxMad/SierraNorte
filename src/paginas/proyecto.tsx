@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { createClient } from '@/lib/supabase/server';
+import { clientePublico } from '@/lib/supabase/publico';
 import { Nav, Footer, Curvas } from '@/components/landing/Chrome';
 import { Icono } from '@/components/ui';
 import { PROYECTO } from '@/lib/contenido';
@@ -20,7 +20,7 @@ export const revalidate = 3600;
 export default async function ProyectoPage({ lang }: { lang: Idioma }) {
   const d = dict(lang);
   const P = lang === 'es' ? PROYECTO : PROYECTO_EN;
-  const supabase = await createClient();
+  const supabase = clientePublico();
   const [{ count: paquetes }, { count: comunidades }] = await Promise.all([
     supabase.from('paquetes').select('*', { count: 'exact', head: true }).eq('activo', true),
     supabase.from('comunidades').select('*', { count: 'exact', head: true }).eq('activa', true),

@@ -35,7 +35,9 @@ export async function proxy(request: NextRequest) {
   // El sitio público (landing, región, proyecto, equipo) y el login no piden
   // sesión. Todo lo demás — el dashboard — sí.
   // El sitio público existe en español (/) y en inglés (/en).
-  const PUBLICAS = ['/', '/region', '/proyecto', '/equipo'];
+  // sitemap.xml y robots.txt son para Google: si los mandamos al login, no
+  // indexa nada.
+  const PUBLICAS = ['/', '/region', '/proyecto', '/equipo', '/sitemap.xml', '/robots.txt'];
   const sinIdioma = pathname.startsWith('/en/')
     ? pathname.slice(3)
     : pathname === '/en'

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { clientePublico } from '@/lib/supabase/publico';
 import type { Comunidad, Duracion } from '@/lib/tipos';
 import Landing from '@/components/landing/Landing';
 import { t, type Idioma } from '@/lib/i18n';
@@ -14,7 +14,7 @@ export type PaqueteWeb = {
 };
 
 export default async function LandingPage({ lang }: { lang: Idioma }) {
-  const supabase = await createClient();
+  const supabase = clientePublico();
 
   const [{ data: paquetes }, { data: comunidades }, { data: relaciones }, { data: dias }] =
     await Promise.all([

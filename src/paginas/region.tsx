@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { createClient } from '@/lib/supabase/server';
+import { clientePublico } from '@/lib/supabase/publico';
 import { Nav, Footer, Curvas } from '@/components/landing/Chrome';
 import { Icono } from '@/components/ui';
 import { REGION } from '@/lib/contenido';
@@ -29,7 +29,7 @@ const FOTO_SECCION: Record<string, string> = {
 export default async function RegionPage({ lang }: { lang: Idioma }) {
   const d = dict(lang);
   const R = lang === 'es' ? REGION : REGION_EN;
-  const supabase = await createClient();
+  const supabase = clientePublico();
   const { data } = await supabase.from('comunidades').select('*').eq('activa', true).order('orden');
   const comunidades = (data ?? []) as Comunidad[];
 

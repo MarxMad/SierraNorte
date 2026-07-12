@@ -21,6 +21,21 @@ export const ruta = (lang: Idioma, path: string) => {
 /** La misma página en el otro idioma. */
 export const otroIdioma = (lang: Idioma): Idioma => (lang === 'es' ? 'en' : 'es');
 
+/**
+ * Le dice a Google que esta página existe en dos idiomas y cuál es cuál.
+ * Va en el `metadata` de CADA página: si sólo se declara en el layout raíz,
+ * todas las páginas acaban diciendo que su versión en inglés es la portada.
+ */
+export const alternos = (lang: Idioma, path: string) => ({
+  canonical: ruta(lang, path),
+  languages: {
+    es: ruta('es', path),
+    en: ruta('en', path),
+    // A quien busca desde un idioma que no tenemos, mándalo al español.
+    'x-default': ruta('es', path),
+  },
+});
+
 /** Elige la columna traducida y cae al español si falta. */
 export const t = <T extends Record<string, unknown>>(
   fila: T,

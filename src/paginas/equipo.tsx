@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { createClient } from '@/lib/supabase/server';
+import { clientePublico } from '@/lib/supabase/publico';
 import { Nav, Footer, Portada } from '@/components/landing/Chrome';
 import { Icono } from '@/components/ui';
 import { EQUIPO, CONTACTO } from '@/lib/contenido';
@@ -41,7 +41,7 @@ const EQUIPO_GOBERNANZA_ES = [
 export default async function EquipoPage({ lang }: { lang: Idioma }) {
   const d = dict(lang);
   const E = lang === 'es' ? EQUIPO : EQUIPO_EN;
-  const supabase = await createClient();
+  const supabase = clientePublico();
   const { data } = await supabase.from('comunidades').select('*').eq('activa', true).order('orden');
   const comunidades = (data ?? []) as Comunidad[];
 
