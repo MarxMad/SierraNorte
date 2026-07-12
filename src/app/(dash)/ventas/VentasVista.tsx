@@ -102,7 +102,7 @@ export default function VentasVista({
           <PanelReservas reservas={reservas} onAbrir={(r) => setEditandoReserva(r)} />
         )}
 
-        {vista === 'clientes' ? (
+        {vista === 'clientes' && (
           <>
             <div className="mb-3 flex flex-wrap items-center gap-2.5">
               <Chip icono="ticket" label="Reservas" valor={rs.length} color="#5B21B6" />
@@ -277,7 +277,9 @@ export default function VentasVista({
               </div>
             )}
           </>
-        ) : (
+        )}
+
+        {vista === 'paquetes' && (
           /* ---------------- PAQUETES ---------------- */
           <div className="min-h-0 flex-1 overflow-auto rounded-xl border border-gray-200 bg-white">
             <table className="w-full min-w-[1200px] border-collapse text-sm">
