@@ -150,7 +150,7 @@ export const DICT = {
     tipoTaller: 'Taller',
 
     // formulario
-    formTitulo: 'Solicitar reserva',
+    formTitulo: 'Apartar lugar',
     formNombre: 'Tu nombre',
     formNombrePh: 'Nombre y apellido',
     formCorreo: 'Correo',
@@ -163,17 +163,25 @@ export const DICT = {
     formNinosNota: 'Los niños van incluidos dentro del total de personas.',
     formNotas: '¿Algo que debamos saber?',
     formNotasPh: 'Alergias, condición física, idioma, hora de llegada…',
-    formEnviar: 'Enviar solicitud',
-    formEnviando: 'Enviando…',
+    formEnviar: 'Apartar ahora',
+    formEnviando: 'Apartando…',
     formLegal:
-      'No se cobra nada ahora. Te contactamos para confirmar disponibilidad y forma de pago.',
-    formOkTitulo: 'Solicitud enviada',
+      'Tu lugar queda apartado 72 horas. Te contactamos para confirmar el depósito y forma de pago.',
+    formOkTitulo: 'Lugar apartado',
     formOkSub: (mail: string) =>
-      `Te vamos a escribir a ${mail} para confirmar disponibilidad y forma de pago.`,
-    formCodigo: 'Tu código de reserva',
+      `Te escribimos a ${mail} para confirmar el depósito. Si no pagas a tiempo, el cupo se libera.`,
+    formCodigo: 'Tu código de apartado',
+    formApartadoExpira: (fecha: string) => `Este apartado vence el ${fecha}.`,
+    formCupoRestante: (n: number) =>
+      n === 0 ? 'Sin cupo para esta fecha.' : `Quedan ${n} lugares (personas) para esta salida.`,
     formListo: 'Listo',
     errNombre: 'Escribe tu nombre.',
     errCorreo: 'El correo no parece válido.',
+
+    puebloExperiencias: 'Experiencias en',
+    puebloVerTodas: 'Ver todas en Expediciones Sierra Norte',
+    puebloContactoLead: 'Solicitar información',
+    puebloLeadOk: 'Gracias. Te contactaremos pronto.',
   },
 
   en: {
@@ -264,7 +272,7 @@ export const DICT = {
     tipoActividad: 'Activity',
     tipoTaller: 'Workshop',
 
-    formTitulo: 'Request a booking',
+    formTitulo: 'Hold your spot',
     formNombre: 'Your name',
     formNombrePh: 'First and last name',
     formCorreo: 'Email',
@@ -277,17 +285,25 @@ export const DICT = {
     formNinosNota: 'Children are counted within the total number of people.',
     formNotas: 'Anything we should know?',
     formNotasPh: 'Allergies, fitness level, language, arrival time…',
-    formEnviar: 'Send request',
-    formEnviando: 'Sending…',
+    formEnviar: 'Hold spot',
+    formEnviando: 'Holding…',
     formLegal:
-      'Nothing is charged now. We will contact you to confirm availability and payment.',
-    formOkTitulo: 'Request sent',
+      'Your spot is held for 72 hours. We will contact you to confirm deposit and payment.',
+    formOkTitulo: 'Spot held',
     formOkSub: (mail: string) =>
-      `We will write to ${mail} to confirm availability and payment.`,
-    formCodigo: 'Your booking code',
+      `We will email ${mail} to confirm your deposit. Unpaid holds are released automatically.`,
+    formCodigo: 'Your hold code',
+    formApartadoExpira: (fecha: string) => `This hold expires on ${fecha}.`,
+    formCupoRestante: (n: number) =>
+      n === 0 ? 'No availability on this date.' : `${n} spots (people) left for this departure.`,
     formListo: 'Done',
     errNombre: 'Please write your name.',
     errCorreo: 'That email does not look valid.',
+
+    puebloExperiencias: 'Experiences in',
+    puebloVerTodas: 'See all on Expediciones Sierra Norte',
+    puebloContactoLead: 'Request information',
+    puebloLeadOk: 'Thank you. We will be in touch soon.',
   },
 } as const;
 

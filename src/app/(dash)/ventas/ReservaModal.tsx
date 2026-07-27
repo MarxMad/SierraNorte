@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Modal, Campo, inputCls, BtnPrimario, BtnGhost, Pill, Icono } from '@/components/ui';
+import ReservaExpediente from './ReservaExpediente';
 import { guardarReservaConReparto } from '@/app/acciones';
 import {
   type Reserva,
@@ -17,6 +18,7 @@ import {
   COLOR_METODO,
   COLOR_PLATAFORMA,
   COLOR_STATUS,
+  FUENTES_RESERVA,
   colorPagado,
   dinero,
   hexA,
@@ -26,11 +28,15 @@ export default function ReservaModal({
   reserva,
   paquetes,
   guias,
+  agentes,
+  editable,
   onClose,
 }: {
   reserva: Partial<Reserva>;
   paquetes: Paquete[];
   guias: Guia[];
+  agentes: { user_id: string; nombre: string }[];
+  editable: boolean;
   onClose: () => void;
 }) {
   const nueva = !reserva.id;
@@ -131,6 +137,11 @@ export default function ReservaModal({
           transporte: d.transporte || null,
           status: d.status,
           notas: d.notas || null,
+          agente_id: d.agente_id || null,
+          nacionalidad: d.nacionalidad || null,
+          fuente: d.fuente || 'manual',
+          origen_comunidad_id: d.origen_comunidad_id || null,
+          apartado_expira_at: d.apartado_expira_at || null,
         },
         dividido
           ? reparto.map((l) => ({
@@ -497,6 +508,52 @@ export default function ReservaModal({
           )}
         </div>
 
+        {!nueva && d.status === 'Apartado' && d.apartado_expira_at && (
+          <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900">
+            Apartado vigente hasta{' '}
+            {new Date(d.apartado_expira_at).toLocaleString('es-MX')}. Confirma un depósito en Banca
+            o Liquidación para pasar a Confirmado.
+          </p>
+        )}
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Campo label="Agente" icono="user">
+            <select
+              className={inputCls}
+              value={d.agente_id ?? ''}
+              onChange={(e) => set({ agente_id: e.target.value || null })}
+            >
+              <option value="">— Sin agente —</option>
+              {agentes.map((a) => (
+                <option key={a.user_id} value={a.user_id}>
+                  {a.nombre}
+                </option>
+              ))}
+            </select>
+          </Campo>
+          <Campo label="Nacionalidad" icono="language">
+            <input
+              className={inputCls}
+              value={d.nacionalidad ?? ''}
+              onChange={(e) => set({ nacionalidad: e.target.value })}
+              placeholder="México, USA, Italia…"
+            />
+          </Campo>
+          <Campo label="Fuente" icono="route">
+            <select
+              className={inputCls}
+              value={d.fuente ?? 'manual'}
+              onChange={(e) => set({ fuente: e.target.value as Reserva['fuente'] })}
+            >
+              {FUENTES_RESERVA.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+          </Campo>
+        </div>
+
         {/* Guía y transporte */}
         <div className="grid gap-4 sm:grid-cols-2">
           <Campo label="Guía asignado" icono="user">
@@ -546,6 +603,8 @@ export default function ReservaModal({
             ))}
           </div>
         </div>
+
+        {!nueva && d.id && <ReservaExpediente reservaId={d.id} editable={editable} />}
 
         <Campo label="Notas" icono="note">
           <textarea

@@ -5,7 +5,9 @@
 export type Rol = 'admin' | 'ventas' | 'comunidad' | 'finanzas';
 
 export type Duracion = '1 día' | '2 días' | '3 días' | '4 días' | '5 días' | '7 días' | 'Servicios';
-export type StatusOperativo = 'Planeación' | 'Confirmado' | 'En Curso' | 'Finalizado';
+export type StatusOperativo = 'Apartado' | 'Planeación' | 'Confirmado' | 'En Curso' | 'Finalizado';
+export type FuenteReserva = 'web_global' | 'web_micrositio' | 'manual' | 'lead';
+export type EstadoLead = 'nuevo' | 'contactado' | 'calificado' | 'convertido' | 'perdido';
 export type MetodoPago = 'Efectivo' | 'Transfer/Tarjeta' | 'Pago en comunidad';
 export type Plataforma = 'WeTravel' | 'PayPal' | 'BBVA Transfer';
 export type StatusPago = 'Pendiente' | 'Confirmado' | 'Vencido' | 'Devuelto';
@@ -27,6 +29,8 @@ export interface Comunidad {
   nombre: string;
   color: string;
   orden: number;
+  descripcion?: string | null;
+  descripcion_en?: string | null;
 }
 
 export interface Guia {
@@ -52,6 +56,7 @@ export interface Paquete {
   transporte_tipo: string | null;
   transporte_ruta: string | null;
   transporte_monto: number;
+  cupo_personas_salida: number | null;
   // derivados de v_paquetes
   reservas: number;
   pax: number;
@@ -87,6 +92,13 @@ export interface Reserva {
   transporte: string | null;
   status: StatusOperativo;
   notas: string | null;
+  apartado_expira_at: string | null;
+  origen_comunidad_id: string | null;
+  origen_comunidad: string | null;
+  agente_id: string | null;
+  agente: string | null;
+  nacionalidad: string | null;
+  fuente: FuenteReserva | null;
   pagado: number;
   saldo: number;
   pagado_pct: number;
@@ -99,6 +111,46 @@ export interface LineaPago {
   metodo_pago: MetodoPago;
   plataforma: Plataforma | null;
   monto: number;
+}
+
+export interface Lead {
+  id: string;
+  nombre: string;
+  email: string | null;
+  telefono: string | null;
+  paquete_id: string | null;
+  origen_comunidad_id: string | null;
+  agente_id: string | null;
+  estado: EstadoLead;
+  motivo_perdida: string | null;
+  notas: string | null;
+  reserva_id: string | null;
+  created_at: string;
+}
+
+export interface TransporteSalida {
+  reserva_id: string;
+  codigo: string;
+  cliente: string;
+  paquete_id: string;
+  paquete: string;
+  fecha_inicio: string | null;
+  fecha_fin: string | null;
+  pax: number;
+  status: StatusOperativo;
+  transporte: string | null;
+  transporte_proveedor: string | null;
+  transporte_ruta: string | null;
+  transporte_monto: number;
+}
+
+export interface ReservaAdjunto {
+  id: string;
+  reserva_id: string;
+  nombre: string;
+  storage_path: string;
+  mime_type: string | null;
+  created_at: string;
 }
 
 export interface Pago {
@@ -347,6 +399,7 @@ export const COLOR_DURACION: Record<string, string> = {
 };
 
 export const COLOR_STATUS: Record<string, string> = {
+  Apartado: '#F59E0B',
   Planeación: '#9CA3AF',
   Confirmado: '#2563EB',
   'En Curso': '#A78BFA',
@@ -382,7 +435,28 @@ export const COLOR_LIQ: Record<string, string> = {
   Anfitrión: '#0D9488',
 };
 
-export const STATUSES: StatusOperativo[] = ['Planeación', 'Confirmado', 'En Curso', 'Finalizado'];
+export const STATUSES: StatusOperativo[] = [
+  'Apartado',
+  'Planeación',
+  'Confirmado',
+  'En Curso',
+  'Finalizado',
+];
+
+export const FUENTES_RESERVA: { id: FuenteReserva; label: string }[] = [
+  { id: 'web_global', label: 'Web global' },
+  { id: 'web_micrositio', label: 'Micrositio pueblo' },
+  { id: 'manual', label: 'Manual' },
+  { id: 'lead', label: 'Lead' },
+];
+
+export const ESTADOS_LEAD: EstadoLead[] = [
+  'nuevo',
+  'contactado',
+  'calificado',
+  'convertido',
+  'perdido',
+];
 export const METODOS: MetodoPago[] = ['Efectivo', 'Transfer/Tarjeta', 'Pago en comunidad'];
 export const PLATAFORMAS: Plataforma[] = ['WeTravel', 'PayPal', 'BBVA Transfer'];
 export const TRANSPORTES = [

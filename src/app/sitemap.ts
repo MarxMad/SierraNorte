@@ -23,11 +23,14 @@ const entrada = (path: string, extra: Partial<MetadataRoute.Sitemap[number]> = {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = clientePublico();
 
-  const { data: paquetes } = await supabase
-    .from('paquetes')
-    .select('id')
-    .eq('activo', true)
-    .neq('duracion', 'Servicios'); // Servicios Individuales no tiene página propia
+  const [{ data: paquetes }, { data: pueblos }] = await Promise.all([
+    supabase
+      .from('paquetes')
+      .select('id')
+      .eq('activo', true)
+      .neq('duracion', 'Servicios'),
+    supabase.from('comunidades').select('id').eq('activa', true),
+  ]);
 
   return [
     entrada('/', { changeFrequency: 'weekly', priority: 1 }),
@@ -36,6 +39,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entrada('/equipo', { changeFrequency: 'monthly', priority: 0.5 }),
     ...(paquetes ?? []).map((p) =>
       entrada(`/experiencias/${p.id}`, { changeFrequency: 'monthly' as const, priority: 0.8 })
+    ),
+    ...(pueblos ?? []).map((c) =>
+      entrada(`/pueblos/${c.id}`, { changeFrequency: 'monthly' as const, priority: 0.75 })
     ),
   ];
 }

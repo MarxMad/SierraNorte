@@ -1,9 +1,9 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useTransition, useState } from 'react';
 import Encabezado from '@/components/Encabezado';
 import { Avatar, Pill, Icono } from '@/components/ui';
-import { actualizarPerfil } from '@/app/acciones';
+import { actualizarPerfil, importarPreciosPaquetes } from '@/app/acciones';
 import type { Perfil, Comunidad, Rol } from '@/lib/tipos';
 import { ETIQUETA_ROL } from '@/lib/permisos';
 
@@ -31,6 +31,23 @@ export default function AdminVista({
   comunidades: Comunidad[];
 }) {
   const [pending, startTransition] = useTransition();
+  const [csvMsg, setCsvMsg] = useState<string | null>(null);
+
+  const importarCsv = (text: string) => {
+    const lines = text.trim().split(/\r?\n/).slice(1);
+    const filas = lines
+      .map((line) => {
+        const [id, precio] = line.split(',').map((s) => s.trim().replace(/^"|"$/g, ''));
+        if (!id) return null;
+        return { id, precio: Number(precio) || 0 };
+      })
+      .filter(Boolean) as { id: string; precio: number }[];
+
+    startTransition(async () => {
+      const res = await importarPreciosPaquetes(filas);
+      setCsvMsg(res.ok ? `Actualizados ${res.n ?? 0} paquetes.` : (res.error ?? 'Error'));
+    });
+  };
 
   const cambiar = (userId: string, cambios: Parameters<typeof actualizarPerfil>[1]) => {
     startTransition(async () => {
@@ -140,6 +157,25 @@ export default function AdminVista({
           Los usuarios se registran ellos mismos en la pantalla de acceso. Aquí les asignas el rol.
           Entran como <b>Ventas</b> hasta que los cambies.
         </p>
+
+        <div className="mt-6 rounded-xl border border-gray-200 bg-white p-4">
+          <p className="text-sm font-extrabold text-gray-900">Importar precios de venta (CSV)</p>
+          <p className="mt-1 text-xs text-gray-500">
+            Columnas: <code className="font-mono">id,precio</code> — ver{' '}
+            <code className="font-mono">docs/plantillas/precios-paquetes.csv</code>
+          </p>
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            className="mt-3 block text-sm"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (!f) return;
+              f.text().then(importarCsv);
+            }}
+          />
+          {csvMsg && <p className="mt-2 text-xs font-semibold text-emerald-700">{csvMsg}</p>}
+        </div>
       </div>
     </>
   );

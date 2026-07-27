@@ -115,6 +115,13 @@ export async function guardarPaqueteCompleto(
     p_comedores: comedores,
   });
 
+  if (!error && paquete.id && 'cupo_personas_salida' in paquete) {
+    await supabase
+      .from('paquetes')
+      .update({ cupo_personas_salida: (paquete.cupo_personas_salida as number | null) ?? null })
+      .eq('id', paquete.id as string);
+  }
+
   revalidatePath('/ventas');
   revalidatePath('/liquidacion');
   revalidatePath('/calendario');
@@ -336,4 +343,86 @@ export async function actualizarPerfil(
   const { error } = await supabase.from('perfiles').update(patch).eq('user_id', userId);
   revalidatePath('/admin');
   return fallo(error);
+}
+
+// ---------------------------------------------------------------------
+// PRECIOS — importación CSV (id, precio)
+// ---------------------------------------------------------------------
+export async function importarPreciosPaquetes(filas: { id: string; precio: number }[]): Promise<Resultado & { n?: number }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('importar_precios_paquetes', {
+    p_filas: filas,
+  });
+  if (error) return { ok: false, error: traducir(error.message) };
+  revalidatePath('/ventas');
+  revalidatePath('/');
+  return { ok: true, n: data as number };
+}
+
+// ---------------------------------------------------------------------
+// LEADS
+// ---------------------------------------------------------------------
+export async function guardarLead(datos: Record<string, unknown>): Promise<Resultado> {
+  const supabase = await createClient();
+  const { id, ...resto } = datos as { id?: string } & Record<string, unknown>;
+  const { error } = id
+    ? await supabase.from('leads').update(resto).eq('id', id)
+    : await supabase.from('leads').insert(resto);
+  revalidatePath('/ventas');
+  return fallo(error);
+}
+
+export async function convertirLead(leadId: string): Promise<Resultado & { reservaId?: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('convertir_lead_a_reserva', { p_lead_id: leadId });
+  if (error) return { ok: false, error: traducir(error.message) };
+  revalidatePath('/ventas');
+  return { ok: true, reservaId: data as string };
+}
+
+export async function marcarLeadPerdido(id: string, motivo: string): Promise<Resultado> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('leads')
+    .update({ estado: 'perdido', motivo_perdida: motivo })
+    .eq('id', id);
+  revalidatePath('/ventas');
+  return fallo(error);
+}
+
+// ---------------------------------------------------------------------
+// EXPEDIENTE — adjuntos de reserva
+// ---------------------------------------------------------------------
+export async function registrarAdjuntoReserva(datos: {
+  reserva_id: string;
+  nombre: string;
+  storage_path: string;
+  mime_type?: string;
+}): Promise<Resultado> {
+  const supabase = await createClient();
+  const { error } = await supabase.from('reserva_adjuntos').insert(datos);
+  revalidatePath('/ventas');
+  return fallo(error);
+}
+
+export async function borrarAdjuntoReserva(id: string): Promise<Resultado> {
+  const supabase = await createClient();
+  const { error } = await supabase.from('reserva_adjuntos').delete().eq('id', id);
+  revalidatePath('/ventas');
+  return fallo(error);
+}
+
+export async function urlExpediente(ruta: string): Promise<{ url?: string; error?: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.storage.from('expedientes').createSignedUrl(ruta, 60 * 5);
+  if (error) return { error: error.message };
+  return { url: data.signedUrl };
+}
+
+export async function liberarApartadosVencidos(): Promise<Resultado & { n?: number }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('liberar_apartados_vencidos');
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/ventas');
+  return { ok: true, n: data as number };
 }

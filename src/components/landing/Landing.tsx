@@ -192,9 +192,10 @@ export default function Landing({
             {comunidades.map((c) => {
               const n = paquetes.filter((p) => p.comunidades.includes(c.nombre)).length;
               return (
-                <div
+                <Link
                   key={c.id}
-                  className="group relative h-40 overflow-hidden rounded-xl transition hover:-translate-y-0.5 hover:shadow-lg"
+                  href={ruta(lang, `/pueblos/${c.id}`)}
+                  className="group relative block h-40 overflow-hidden rounded-xl transition hover:-translate-y-0.5 hover:shadow-lg"
                 >
                   <Image
                     src={fotoComunidad(c.id)}
@@ -214,7 +215,7 @@ export default function Landing({
                     className="absolute inset-x-0 top-0 h-1"
                     style={{ background: c.color }}
                   />
-                </div>
+                </Link>
               );
             })}
           </div>

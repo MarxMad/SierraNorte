@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { Icono } from '@/components/ui';
 import { solicitarReserva } from '@/app/acciones-web';
+import { cupoRestantePublico } from '@/app/cupo-web';
 import { hexA } from '@/lib/tipos';
 import { dict, type Idioma } from '@/lib/i18n';
 
@@ -12,6 +13,7 @@ export default function ReservaForm({
   paqueteNombre,
   precio,
   color,
+  origenComunidadId,
   onClose,
 }: {
   lang: Idioma;
@@ -19,6 +21,7 @@ export default function ReservaForm({
   paqueteNombre: string;
   precio: number;
   color: string;
+  origenComunidadId?: string | null;
   onClose: () => void;
 }) {
   const d = dict(lang);
@@ -34,7 +37,17 @@ export default function ReservaForm({
   });
   const [error, setError] = useState<string | null>(null);
   const [codigo, setCodigo] = useState<string | null>(null);
+  const [expiraAt, setExpiraAt] = useState<string | null>(null);
+  const [cupoRestante, setCupoRestante] = useState<number | null>(null);
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (!datos.fecha) {
+      setCupoRestante(null);
+      return;
+    }
+    cupoRestantePublico(paqueteId, datos.fecha).then((r) => setCupoRestante(r.restante));
+  }, [paqueteId, datos.fecha]);
 
   const set = (p: Partial<typeof datos>) => setDatos((v) => ({ ...v, ...p }));
   const total = precio * datos.personas;
@@ -42,9 +55,11 @@ export default function ReservaForm({
   const enviar = () => {
     setError(null);
     startTransition(async () => {
-      const res = await solicitarReserva({ ...datos, paqueteId, lang });
-      if (res.ok && res.codigo) setCodigo(res.codigo);
-      else setError(res.error ?? 'No se pudo enviar la solicitud.');
+      const res = await solicitarReserva({ ...datos, paqueteId, lang, origenComunidadId });
+      if (res.ok && res.codigo) {
+        setCodigo(res.codigo);
+        setExpiraAt(res.expiraAt ?? null);
+      } else setError(res.error ?? 'No se pudo enviar la solicitud.');
     });
   };
 
@@ -74,6 +89,12 @@ export default function ReservaForm({
               </p>
               <p className="mt-1 font-mono text-2xl font-extrabold text-[#5B21B6]">{codigo}</p>
             </div>
+
+            {expiraAt && (
+              <p className="mt-4 text-sm font-semibold text-amber-800">
+                {d.formApartadoExpira(new Date(expiraAt).toLocaleString(lang === 'en' ? 'en-US' : 'es-MX'))}
+              </p>
+            )}
 
             <button
               onClick={onClose}
@@ -142,13 +163,19 @@ export default function ReservaForm({
                     }
                   />
                 </Campo>
-                <Campo label={d.formFecha}>
+                <Campo label={d.formFecha} req>
                   <input
                     className={input}
                     type="date"
+                    required
                     value={datos.fecha}
                     onChange={(e) => set({ fecha: e.target.value })}
                   />
+                  {cupoRestante !== null && datos.fecha && (
+                    <p className="mt-1 text-[11px] font-semibold text-gray-500">
+                      {d.formCupoRestante(cupoRestante)}
+                    </p>
+                  )}
                 </Campo>
               </div>
 

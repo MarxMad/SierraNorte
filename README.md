@@ -202,6 +202,7 @@ El orden importa: cada archivo asume lo que hizo el anterior.
 | `12`–`13` | La ruta de una reserva; todos leen, cada quien mueve lo suyo |
 | `14`–`15` | Comprobantes y contabilidad |
 | `16`–`19` | Operación real, paquetes, pago dividido |
+| `20`–`21` | Apartado 72 h, micrositios, leads, expediente, cupos |
 
 ### 2. Variables de entorno
 

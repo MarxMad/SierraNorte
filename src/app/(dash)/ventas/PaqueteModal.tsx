@@ -206,6 +206,7 @@ export default function PaqueteModal({
           transporte_tipo: d.transporte_tipo || null,
           transporte_ruta: d.transporte_ruta || null,
           transporte_monto: d.transporte_monto ?? 0,
+          cupo_personas_salida: d.cupo_personas_salida ?? null,
         },
         coms,
         dias.map((dia) => ({
@@ -355,6 +356,20 @@ export default function PaqueteModal({
                     value={d.precio || ''}
                     onChange={(e) => set({ precio: Number(e.target.value) || 0 })}
                     placeholder="0"
+                  />
+                </Campo>
+                <Campo label="Cupo pax / salida" icono="users">
+                  <input
+                    className={inputCls}
+                    type="number"
+                    min={1}
+                    value={d.cupo_personas_salida ?? ''}
+                    onChange={(e) =>
+                      set({
+                        cupo_personas_salida: e.target.value ? Number(e.target.value) : null,
+                      })
+                    }
+                    placeholder="Sin límite"
                   />
                 </Campo>
               </div>

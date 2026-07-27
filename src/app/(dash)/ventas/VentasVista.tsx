@@ -6,13 +6,18 @@ import { Icono, Pill, Avatar, BotonAccion, Vacio, BtnPrimario } from '@/componen
 import ReservaModal from './ReservaModal';
 import PaqueteModal from './PaqueteModal';
 import PanelReservas from './PanelReservas';
-import { borrarReserva } from '@/app/acciones';
+import TablaReservas, { exportarReservasCsv } from './TablaReservas';
+import VentasLeads from './VentasLeads';
+import VentasTransportes from './VentasTransportes';
+import { borrarReserva, liberarApartadosVencidos } from '@/app/acciones';
 import {
   type Reserva,
   type Paquete,
   type Guia,
   type Perfil,
   type Comunidad,
+  type Lead,
+  type TransporteSalida,
   COLOR_DURACION,
   COLOR_STATUS,
   COLOR_METODO,
@@ -25,8 +30,11 @@ import { puedeEditarVentas } from '@/lib/permisos';
 
 const VISTAS = [
   { id: 'panel', label: 'Panel', icono: 'chart' },
+  { id: 'tabla', label: 'Tabla', icono: 'clipboard' },
   { id: 'clientes', label: 'Clientes', icono: 'users' },
-  { id: 'paquetes', label: 'Paquetes', icono: 'clipboard' },
+  { id: 'leads', label: 'Leads', icono: 'bell' },
+  { id: 'transportes', label: 'Transportes', icono: 'bus' },
+  { id: 'paquetes', label: 'Paquetes', icono: 'mountain' },
 ];
 
 export default function VentasVista({
@@ -37,6 +45,9 @@ export default function VentasVista({
   paquetes,
   guias,
   comunidades,
+  leads,
+  transportes,
+  agentes,
 }: {
   perfil: Perfil;
   vista: string;
@@ -45,6 +56,9 @@ export default function VentasVista({
   paquetes: Paquete[];
   guias: Guia[];
   comunidades: Comunidad[];
+  leads: Lead[];
+  transportes: TransporteSalida[];
+  agentes: Perfil[];
 }) {
   const [editandoReserva, setEditandoReserva] = useState<Partial<Reserva> | null>(null);
   const [editandoPaquete, setEditandoPaquete] = useState<Paquete | null>(null);
@@ -101,6 +115,39 @@ export default function VentasVista({
         {vista === 'panel' && (
           <PanelReservas reservas={reservas} onAbrir={(r) => setEditandoReserva(r)} />
         )}
+
+        {vista === 'tabla' && (
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              <BtnPrimario onClick={() => exportarReservasCsv(rs)}>
+                <Icono n="download" s={14} c="#fff" />
+                Exportar CSV
+              </BtnPrimario>
+              {editable && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    startTransition(async () => {
+                      const res = await liberarApartadosVencidos();
+                      if (res.ok) alert(`Apartados liberados: ${res.n ?? 0}`);
+                      else alert(res.error);
+                    })
+                  }
+                  className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-800"
+                >
+                  Liberar apartados vencidos
+                </button>
+              )}
+            </div>
+            <TablaReservas reservas={rs} onAbrir={(r) => setEditandoReserva(r)} />
+          </div>
+        )}
+
+        {vista === 'leads' && (
+          <VentasLeads leads={leads} paquetes={paquetes} editable={editable} />
+        )}
+
+        {vista === 'transportes' && <VentasTransportes filas={transportes} />}
 
         {vista === 'clientes' && (
           <>
@@ -440,6 +487,8 @@ export default function VentasVista({
           reserva={editandoReserva}
           paquetes={paquetes}
           guias={guias}
+          agentes={agentes}
+          editable={editable}
           onClose={() => setEditandoReserva(null)}
         />
       )}

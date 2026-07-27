@@ -53,7 +53,7 @@ export default function PanelReservas({
       </div>
 
       {/* ---------- El tablero, columna por estado ---------- */}
-      <div className="mb-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         {STATUSES.map((s) => {
           const list = reservas.filter((r) => r.status === s);
           const paxCol = list.reduce((a, r) => a + r.personas, 0);
