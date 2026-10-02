@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Icono } from '@/components/ui';
@@ -30,14 +30,12 @@ export default function DetalleExperiencia({
   foto,
   comunidades,
   itinerario,
-  origenComunidadId,
 }: {
   lang: Idioma;
   paquete: Paquete;
   foto: string;
   comunidades: { id: string; nombre: string; color: string }[];
   itinerario: Dia[];
-  origenComunidadId?: string | null;
 }) {
   const d = dict(lang);
   const [abierto, setAbierto] = useState(false);
@@ -255,16 +253,20 @@ export default function DetalleExperiencia({
         </div>
       </main>
 
+      {/* ReservaForm lee ?pueblo= de la URL, y eso obliga a un límite de
+          Suspense. El formulario sólo existe al abrirlo, así que el límite
+          nunca estorba al prerender de la ficha. */}
       {abierto && (
-        <ReservaForm
-          lang={lang}
-          paqueteId={paquete.id}
-          paqueteNombre={paquete.nombre}
-          precio={paquete.precio}
-          color={color}
-          origenComunidadId={origenComunidadId}
-          onClose={() => setAbierto(false)}
-        />
+        <Suspense fallback={null}>
+          <ReservaForm
+            lang={lang}
+            paqueteId={paquete.id}
+            paqueteNombre={paquete.nombre}
+            precio={paquete.precio}
+            color={color}
+            onClose={() => setAbierto(false)}
+          />
+        </Suspense>
       )}
     </>
   );

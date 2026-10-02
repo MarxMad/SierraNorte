@@ -60,11 +60,9 @@ export const metaExperiencia =
 export default async function ExperienciaPage({
   params,
   lang,
-  origenComunidadId,
 }: {
   params: Promise<{ id: string }>;
   lang: Idioma;
-  origenComunidadId?: string | null;
 }) {
   const { id } = await params;
   const supabase = clientePublico();
@@ -109,7 +107,6 @@ export default async function ExperienciaPage({
         foto={fotoDe(paquete.id)}
         comunidades={coms}
         itinerario={itinerario}
-        origenComunidadId={origenComunidadId}
       />
       <Footer lang={lang} />
     </div>

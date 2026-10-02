@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Icono } from '@/components/ui';
 import { solicitarReserva } from '@/app/acciones-web';
 import { cupoRestantePublico } from '@/app/cupo-web';
@@ -13,7 +14,6 @@ export default function ReservaForm({
   paqueteNombre,
   precio,
   color,
-  origenComunidadId,
   onClose,
 }: {
   lang: Idioma;
@@ -21,10 +21,16 @@ export default function ReservaForm({
   paqueteNombre: string;
   precio: number;
   color: string;
-  origenComunidadId?: string | null;
   onClose: () => void;
 }) {
   const d = dict(lang);
+
+  // De dónde viene la reserva: el micrositio de un pueblo manda al catálogo
+  // con ?pueblo=latuvi y así se le acredita la venta. Se lee aquí, en el
+  // cliente, porque leerlo en el servidor volvía dinámica la ficha de la
+  // experiencia —que se prerenderiza— y la tiraba con 500.
+  const origen = useSearchParams().get('pueblo');
+
   const [datos, setDatos] = useState({
     nombre: '',
     email: '',
@@ -55,7 +61,7 @@ export default function ReservaForm({
   const enviar = () => {
     setError(null);
     startTransition(async () => {
-      const res = await solicitarReserva({ ...datos, paqueteId, lang, origenComunidadId });
+      const res = await solicitarReserva({ ...datos, paqueteId, lang, origenComunidadId: origen });
       if (res.ok && res.codigo) {
         setCodigo(res.codigo);
         setExpiraAt(res.expiraAt ?? null);
