@@ -47,6 +47,615 @@ input:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
 }
 
+/* =====================================================================
+   MICROSITIO CINEMATOGRÁFICO DE CADA PUEBLO
+   Ver src/components/landing/CinematicoPueblo.tsx
+
+   El acto entero se mueve con seis números que el componente escribe en
+   `.cine` una vez por cuadro. Todo lo demás —transformes, opacidades,
+   filtros— se deriva aquí con calc(). Así el hilo principal sólo hace
+   seis setProperty por cuadro en lugar de treinta.
+
+     --t0  se revelan los planos medios       (avance 0.05 → 0.20)
+     --t1  el título se va                    (avance 0.00 → 0.17)
+     --t2  el sendero se acerca y se abre     (avance 0.14 → 0.42)
+     --t2b entra el panel del pueblo          (avance 0.20 → 0.42)
+     --t3  entra la naturaleza, cambia panel  (avance 0.45 → 0.70)
+     --t4  entra el carrusel                  (avance 0.62 → 0.88)
+     --t5  aparecen las flechas               (avance 0.82 → 0.95)
+
+   El fotograma de apertura es UNA sola foto y el título. Los demás
+   planos entran con --t0: si se pintan todos desde el avance 0, con
+   fotografía real el resultado lee como collage, no como profundidad.
+   ===================================================================== */
+
+@property --t0 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --t1 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --t2 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --t2b { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --t3 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --t4 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --t5 { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --mx { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --my { syntax: "<number>"; inherits: true; initial-value: 0; }
+
+.cine {
+  --t0: 0;
+  --t1: 0;
+  --t2: 0;
+  --t2b: 0;
+  --t3: 0;
+  --t4: 0;
+  --t5: 0;
+  --mx: 0; /* paralaje del ratón, -1 a 1 */
+  --my: 0;
+  --par: 18px; /* cuánto se mueve el fondo con el ratón */
+  --fondo: #0b2c21;
+  --papel: #f4ede4;
+  --acento: #1f7d5e; /* lo pisa el color de la comunidad, inline */
+
+  position: relative;
+  height: 340vh; /* el recorrido del acto; el resto es la pantalla fija */
+  background: var(--fondo);
+  color: var(--papel);
+}
+
+.cine-escenario {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ---------- las siete capas ---------- */
+
+.cine-capas {
+  position: absolute;
+  inset: 0;
+  overflow: hidden; /* los marcos salen por los lados: aquí se recortan */
+}
+
+.cine-capa,
+.cine-marco {
+  position: absolute;
+}
+
+.cine-capa img,
+.cine-marco img {
+  object-fit: cover;
+}
+
+/* Cielo: el plano más lejano. Respira con el ratón y se hunde cuando el
+   sendero —que es esta misma toma— se le viene encima: sin ese blur las
+   dos copias se ven como un duplicado, no como profundidad. */
+.cine-cielo {
+  inset: -6%;
+  z-index: 0;
+  transform: translate(calc(var(--mx) * var(--par) * -1), calc(var(--my) * var(--par) * -1))
+    scale(1.08);
+  filter: blur(calc(var(--t2) * 8px)) brightness(calc(1 - var(--t2) * 0.3));
+}
+
+/* Niebla: la misma toma del plano medio, desenfocada y encogida. */
+.cine-niebla {
+  inset: 0;
+  z-index: 1;
+  opacity: calc(var(--t0) * 0.85);
+  transform: translate(calc(var(--mx) * var(--par) * -0.55), 10vh) scale(0.85);
+  filter: blur(calc(var(--t2) * 14px)) brightness(calc(1 - var(--t2) * 0.255));
+}
+
+/* Pueblo: el plano medio nítido, que gana color conforme avanza el acto. */
+.cine-pueblo {
+  inset: 0;
+  z-index: 2;
+  opacity: calc(var(--t0) * 0.95);
+  transform: translateY(18vh) scale(0.82);
+  filter: blur(calc(var(--t3) * 3px)) brightness(calc(1 + var(--t3) * 0.12))
+    saturate(calc(1 + var(--t3) * 0.5));
+}
+
+/* Los dos detalles que se abren a los lados. */
+.cine-marco {
+  top: 50%;
+  left: 50%;
+  width: min(40vw, 640px);
+  aspect-ratio: 16 / 10;
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 10;
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.42);
+}
+
+.cine-izq {
+  opacity: var(--t2);
+  transform: translate(calc(-50% - var(--t2) * 82%), calc(-50% - var(--t2) * 300px))
+    scale(calc(1 + var(--t2) * 0.18));
+}
+
+.cine-der {
+  opacity: var(--t2);
+  transform: translate(calc(-50% + var(--t2) * 82%), calc(-50% - var(--t2) * 300px))
+    scale(calc(1 + var(--t2) * 0.18));
+}
+
+/* Sendero: entra por abajo y se te viene encima. */
+.cine-sendero {
+  top: auto;
+  bottom: calc(5vh - var(--t2) * 8vh);
+  left: 50%;
+  width: calc(67.2vw + var(--t2) * 37.8vw);
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 12;
+  opacity: var(--t0);
+  box-shadow: 0 40px 100px rgb(0 0 0 / 0.5);
+  transform: translate(-50%, calc(var(--t2) * -760px)) scale(calc(1.02 + var(--t2) * 0.46));
+}
+
+/* Naturaleza: el cierre, aparece encima de todo. */
+.cine-naturaleza {
+  top: 50%;
+  left: 50%;
+  width: min(72vw, 1100px);
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 13;
+  opacity: calc(var(--t3) * 0.85);
+  box-shadow: 0 40px 100px rgb(0 0 0 / 0.5);
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+/* La sombra que mantiene legible el texto sobre cualquier foto.
+   Son dos: una viñeta al centro, donde caen el título y los paneles, y
+   un degradado vertical que ancla la barra de navegación y el pie. El
+   acervo de ESN son fotos de documentación —grupos, talleres, mercado—
+   con mucho detalle claro: sin esto el texto se pierde. */
+.cine-sombra {
+  position: absolute;
+  inset: 0;
+  z-index: 14;
+  pointer-events: none;
+  background:
+    radial-gradient(110% 74% at 50% 46%, rgb(9 34 26 / 0.46), rgb(9 34 26 / 0) 64%),
+    linear-gradient(
+      to bottom,
+      rgb(9 34 26 / 0.7),
+      rgb(9 34 26 / 0.14) 26%,
+      rgb(9 34 26 / 0.22) 62%,
+      rgb(9 34 26 / 0.9)
+    );
+}
+
+/* ---------- el texto ---------- */
+
+.cine-contenido {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+}
+
+/* El hero, los paneles y el carrusel se turnan el mismo centro de
+   pantalla. Los que están apagados siguen ocupando su caja, así que
+   llevan pointer-events:none —y el componente les apaga la
+   `visibility`— para no interceptar el clic ni el tabulador de quien
+   sí está visible debajo. */
+.cine-hero {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: min(900px, 88vw);
+  text-align: center;
+  pointer-events: none;
+  transform: translate(-50%, calc(-50% + var(--t1) * -210px)) scale(calc(1 - var(--t1) * 0.08));
+  opacity: calc(1 - var(--t1));
+}
+
+.cine-kicker {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.cine-titulo {
+  margin: 14px 0 0;
+  font-family: var(--fuente-display), Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(40px, 9vw, 148px);
+  line-height: 0.98;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+  text-shadow: 0 8px 44px rgb(0 0 0 / 0.45);
+}
+
+.cine-lema {
+  margin: 22px auto 0;
+  max-width: 620px;
+  font-size: clamp(15px, 1.7vw, 20px);
+  line-height: 1.6;
+  text-wrap: pretty;
+  text-shadow: 0 2px 18px rgb(9 34 26 / 0.85);
+}
+
+.cine-etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cine-etiquetas li {
+  padding: 8px 17px;
+  border: 1px solid rgb(244 237 228 / 0.38);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  backdrop-filter: blur(6px);
+}
+
+/* Los paneles laterales se relevan en cadena: el 1 entra, el 2 lo
+   releva, y el carrusel releva al 2. Sin ese último relevo las tarjetas
+   pasan por encima del texto del panel. */
+.cine-panel {
+  position: absolute;
+  right: 6vw;
+  top: 50%;
+  width: min(430px, 42vw);
+  pointer-events: none;
+}
+
+.cine-panel a,
+.cine-panel button {
+  pointer-events: auto;
+}
+
+.cine-panel-1 {
+  opacity: calc(var(--t2b) * (1 - var(--t3)));
+  transform: translateY(calc(-50% + (1 - var(--t2b)) * 58px));
+}
+
+.cine-panel-2 {
+  opacity: calc(var(--t3) * (1 - var(--t4)));
+  transform: translateY(calc(-50% + (1 - var(--t3)) * 58px - var(--t4) * 90px));
+}
+
+.cine-panel h2 {
+  margin: 0 0 16px;
+  font-family: var(--fuente-display), Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(26px, 3vw, 44px);
+  line-height: 1.06;
+  text-wrap: balance;
+}
+
+.cine-panel p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.6;
+  text-wrap: pretty;
+  opacity: 0.86;
+}
+
+.cine-cifras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 34px;
+  margin: 28px 0 0;
+}
+
+.cine-cifras dt {
+  margin: 0;
+  font-family: var(--fuente-display), Georgia, serif;
+  font-size: 44px;
+  line-height: 1;
+}
+
+.cine-cifras dd {
+  margin: 8px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.cine-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 26px;
+  padding: 14px 26px;
+  border-radius: 999px;
+  background: var(--papel);
+  color: #14352a;
+  font-size: 14px;
+  font-weight: 700;
+  transition: transform 0.25s;
+}
+
+.cine-cta:hover {
+  transform: translateY(-2px);
+}
+
+/* ---------- el carrusel de experiencias ---------- */
+
+/* El carrusel ocupa la banda baja del escenario: es el cuadro final del
+   acto y ya no compite con ningún panel. */
+.cine-slider {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 13vh;
+  z-index: 6;
+  /* entra deslizándose desde la derecha */
+  transform: translateX(calc((1 - var(--t4)) * 100vw));
+  opacity: var(--t4);
+  visibility: hidden; /* el componente la enciende al entrar */
+}
+
+.cine-slider-titulo {
+  margin: 0 0 14px;
+  padding-inline: max(24px, calc((100vw - 1180px) / 2));
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.75;
+  text-shadow: 0 2px 14px rgb(9 34 26 / 0.8);
+}
+
+/* La banda es el marco de las flechas: así quedan centradas sobre las
+   tarjetas sin depender de una altura escrita a mano. */
+.cine-banda {
+  position: relative;
+}
+
+.cine-pista {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding: 10px max(24px, calc((100vw - 1180px) / 2));
+}
+
+.cine-pista::-webkit-scrollbar {
+  display: none;
+}
+
+.cine-tarjeta {
+  flex: 0 0 auto;
+  width: 262px;
+  scroll-snap-align: center;
+  border: 1px solid rgb(244 237 228 / 0.2);
+  border-radius: 20px;
+  background: rgb(244 237 228 / 0.09);
+  backdrop-filter: blur(14px);
+  overflow: hidden;
+  transition:
+    transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.35s;
+}
+
+.cine-tarjeta:hover,
+.cine-tarjeta:focus-visible {
+  background: rgb(244 237 228 / 0.18);
+  transform: translateY(-8px);
+}
+
+.cine-tarjeta-foto {
+  position: relative;
+  aspect-ratio: 4 / 3;
+}
+
+.cine-tarjeta-foto img {
+  object-fit: cover;
+}
+
+.cine-tarjeta-cuerpo {
+  padding: 18px 20px 22px;
+}
+
+.cine-tarjeta h3 {
+  margin: 10px 0 0;
+  font-family: var(--fuente-display), Georgia, serif;
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.cine-flechas {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  pointer-events: none; /* sólo los botones reciben el clic */
+  opacity: var(--t5);
+  visibility: hidden;
+}
+
+.cine-flechas button {
+  pointer-events: auto;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(244 237 228 / 0.45);
+  border-radius: 50%;
+  background: rgb(11 44 33 / 0.55);
+  backdrop-filter: blur(10px);
+  color: var(--papel);
+  cursor: pointer;
+  transition: background 0.25s;
+}
+
+.cine-flechas button:hover {
+  background: rgb(11 44 33 / 0.85);
+}
+
+/* ---------- pantallas chicas ---------- */
+
+@media (max-width: 900px) {
+  .cine {
+    height: 240vh; /* menos recorrido: en el pulgar cansa antes */
+  }
+
+  .cine-marco {
+    width: min(68vw, 420px);
+  }
+
+  .cine-izq {
+    transform: translate(calc(-50% - var(--t2) * 62%), calc(-50% - var(--t2) * 210px))
+      scale(calc(1 + var(--t2) * 0.12));
+  }
+
+  .cine-der {
+    transform: translate(calc(-50% + var(--t2) * 62%), calc(-50% - var(--t2) * 210px))
+      scale(calc(1 + var(--t2) * 0.12));
+  }
+
+  .cine-sendero {
+    width: calc(86vw + var(--t2) * 30vw);
+  }
+
+  /* Los paneles se van al pie, a todo lo ancho: a un lado no caben. */
+  .cine-panel {
+    right: auto;
+    left: 50%;
+    top: auto;
+    bottom: 14vh;
+    width: min(520px, 88vw);
+    text-align: center;
+  }
+
+  .cine-panel-1 {
+    transform: translate(-50%, calc((1 - var(--t2b)) * 40px));
+  }
+
+  .cine-panel-2 {
+    transform: translate(-50%, calc((1 - var(--t3)) * 40px));
+  }
+
+  .cine-cifras {
+    justify-content: center;
+    gap: 26px;
+  }
+
+  .cine-slider {
+    bottom: 9vh;
+  }
+
+  .cine-slider-titulo,
+  .cine-pista {
+    padding-inline: 24px;
+  }
+
+  .cine-tarjeta {
+    width: 232px;
+  }
+
+  .cine-flechas {
+    padding: 0 6px;
+  }
+}
+
+/* ---------- sin animación ----------
+   Quien pide menos movimiento no recorre el acto: recibe la misma
+   información apilada, en el orden en que está escrita en el DOM. */
+
+@media (prefers-reduced-motion: reduce) {
+  .cine {
+    height: auto;
+  }
+
+  .cine-escenario {
+    position: relative;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .cine-niebla,
+  .cine-izq,
+  .cine-der,
+  .cine-sendero,
+  .cine-naturaleza {
+    display: none;
+  }
+
+  .cine-cielo {
+    inset: 0;
+    transform: none;
+  }
+
+  .cine-pueblo {
+    opacity: 0.32;
+    transform: none;
+    filter: none;
+  }
+
+  .cine-contenido {
+    position: relative;
+    inset: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 76px;
+    padding: 120px 24px 96px;
+  }
+
+  .cine-hero,
+  .cine-panel,
+  .cine-slider {
+    position: relative;
+    inset: auto;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    width: auto;
+    max-width: 760px;
+    margin-inline: auto;
+    transform: none;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    text-align: center;
+  }
+
+  .cine-slider {
+    max-width: none;
+  }
+
+  /* Las flechas sí siguen encima de la banda: ahí no estorban. */
+  .cine-flechas {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .cine-cifras {
+    justify-content: center;
+  }
+
+  .cine-tarjeta {
+    transition: none;
+  }
+}
+
 /* Las opciones de los <select> en modo oscuro del sistema */
 option {
   color: #111827;

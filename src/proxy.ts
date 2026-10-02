@@ -47,6 +47,7 @@ export async function proxy(request: NextRequest) {
   const esPublica =
     PUBLICAS.includes(sinIdioma) ||
     sinIdioma.startsWith('/experiencias') ||
+    sinIdioma.startsWith('/pueblos') ||
     pathname.startsWith('/login') ||
     pathname.startsWith('/auth');
 

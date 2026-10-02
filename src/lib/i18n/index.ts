@@ -96,7 +96,8 @@ export const DICT = {
 
     // comunidades
     pueblosEyebrow: 'Pueblos Mancomunados',
-    pueblosTitulo: (n: number) => `${n} pueblos, un solo territorio`,
+    pueblosTitulo: (n: number) => `${n} pueblos, cada uno con su sitio`,
+    pueblosSitio: 'Ver su sitio',
     pueblosSub:
       'Son comunidades zapotecas que administran en común un territorio de bosque de niebla y pino-encino. No hay intermediarios: las cabañas, los comedores y los guías son de los pueblos.',
 
@@ -182,6 +183,17 @@ export const DICT = {
     puebloVerTodas: 'Ver todas en Expediciones Sierra Norte',
     puebloContactoLead: 'Solicitar información',
     puebloLeadOk: 'Gracias. Te contactaremos pronto.',
+
+    // micrositio cinematográfico
+    cineDesplaza: 'Desplázate',
+    cineP1t: 'El pueblo lo administra el pueblo',
+    cineP1d:
+      'Las cabañas, los comedores y los senderos son de la comunidad. Lo que dejas aquí se queda aquí.',
+    cineP2t: 'Experiencias que salen de aquí',
+    cineP2d:
+      'Guía de la comunidad, alimentos y hospedaje en cabañas. Mismo catálogo y mismo cupo que en Expediciones Sierra Norte: lo que apartas aquí se descuenta en todos lados.',
+    cineAnterior: 'Experiencia anterior',
+    cineSiguiente: 'Experiencia siguiente',
   },
 
   en: {
@@ -223,7 +235,8 @@ export const DICT = {
     cotizarServicios: 'Request a quote',
 
     pueblosEyebrow: 'Pueblos Mancomunados',
-    pueblosTitulo: (n: number) => `${n} villages, one shared territory`,
+    pueblosTitulo: (n: number) => `${n} villages, each with its own site`,
+    pueblosSitio: 'Visit their site',
     pueblosSub:
       'Zapotec communities that hold and manage a cloud forest territory in common. There are no middlemen: the cabins, the kitchens and the guides belong to the villages.',
 
@@ -304,6 +317,16 @@ export const DICT = {
     puebloVerTodas: 'See all on Expediciones Sierra Norte',
     puebloContactoLead: 'Request information',
     puebloLeadOk: 'Thank you. We will be in touch soon.',
+
+    cineDesplaza: 'Scroll',
+    cineP1t: 'The village runs the village',
+    cineP1d:
+      'The cabins, the kitchens and the trails belong to the community. What you spend here stays here.',
+    cineP2t: 'Experiences that start here',
+    cineP2d:
+      'Community guide, meals and cabin lodging. Same catalogue and same availability as Expediciones Sierra Norte: what you hold here is deducted everywhere.',
+    cineAnterior: 'Previous experience',
+    cineSiguiente: 'Next experience',
   },
 } as const;
 

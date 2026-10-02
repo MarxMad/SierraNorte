@@ -195,7 +195,7 @@ export default function Landing({
                 <Link
                   key={c.id}
                   href={ruta(lang, `/pueblos/${c.id}`)}
-                  className="group relative block h-40 overflow-hidden rounded-xl transition hover:-translate-y-0.5 hover:shadow-lg"
+                  className="group relative block h-48 overflow-hidden rounded-xl transition hover:-translate-y-0.5 hover:shadow-lg"
                 >
                   <Image
                     src={fotoComunidad(c.id)}
@@ -209,6 +209,12 @@ export default function Landing({
                     <p className="font-bold text-white">{c.nombre}</p>
                     <p className="mt-0.5 text-xs font-semibold text-white/70">
                       {d.experiencia(n)}
+                    </p>
+                    {/* El enlace al sitio del pueblo, siempre visible: es la promesa
+                        de que cada comunidad tiene su propia página, no una ficha. */}
+                    <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-bold text-gray-900 transition group-hover:bg-white">
+                      {d.pueblosSitio}
+                      <span aria-hidden="true">→</span>
                     </p>
                   </div>
                   <span

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import type { Comunidad } from '@/lib/tipos';
 import PuebloLanding from '@/components/landing/PuebloLanding';
 import type { PaqueteWeb } from '@/paginas/landing';
+import { escenaDe } from '@/lib/escenas';
 import { t, type Idioma } from '@/lib/i18n';
 
 export default async function PuebloPage({ lang, id }: { lang: Idioma; id: string }) {
@@ -47,6 +48,7 @@ export default async function PuebloPage({ lang, id }: { lang: Idioma; id: strin
     <PuebloLanding
       lang={lang}
       comunidad={c}
+      escena={escenaDe(c.id)}
       descripcion={descripcion}
       paquetes={lista}
     />
