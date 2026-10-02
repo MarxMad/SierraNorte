@@ -61,7 +61,7 @@ export default function Sidebar({
                 <button
                   onClick={() => setAbierto((v) => !v)}
                   className={`mx-2 my-0.5 flex w-[calc(100%-1rem)] items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold transition ${
-                    activo ? 'bg-[#5B21B6] text-white' : 'text-gray-700 hover:bg-gray-200/70'
+                    activo ? 'bg-[#1F7D5E] text-white' : 'text-gray-700 hover:bg-gray-200/70'
                   }`}
                 >
                   <Icono n={item.icono} s={17} c={activo ? '#fff' : '#6B7280'} />
@@ -81,7 +81,7 @@ export default function Sidebar({
                         key={c.id}
                         href={`/comunidades/${c.id}`}
                         className={`mx-2 my-0.5 flex items-center gap-2.5 rounded-lg py-1.5 pl-8 pr-2.5 text-xs font-medium transition ${
-                          act ? 'bg-[#5B21B6] text-white' : 'text-gray-600 hover:bg-gray-200/70'
+                          act ? 'bg-[#1F7D5E] text-white' : 'text-gray-600 hover:bg-gray-200/70'
                         }`}
                       >
                         <span
@@ -110,7 +110,7 @@ export default function Sidebar({
               key={s}
               href={item.href}
               className={`mx-2 my-0.5 flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold transition ${
-                activo ? 'bg-[#5B21B6] text-white' : 'text-gray-700 hover:bg-gray-200/70'
+                activo ? 'bg-[#1F7D5E] text-white' : 'text-gray-700 hover:bg-gray-200/70'
               }`}
             >
               <Icono n={item.icono} s={17} c={activo ? '#fff' : '#6B7280'} />

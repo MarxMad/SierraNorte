@@ -263,10 +263,10 @@ export default function PaqueteModal({
                 setSec(s.id);
               }}
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition ${
-                activa ? 'bg-white text-[#5B21B6] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                activa ? 'bg-white text-[#1F7D5E] shadow-sm' : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              <Icono n={s.icono} s={13} c={activa ? '#5B21B6' : '#9CA3AF'} />
+              <Icono n={s.icono} s={13} c={activa ? '#1F7D5E' : '#9CA3AF'} />
               {s.label}
               {falta && <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />}
             </button>
@@ -522,18 +522,18 @@ export default function PaqueteModal({
                   {dias.map((dia) => (
                     <div key={dia.dia} className="rounded-xl border border-gray-200 bg-white">
                       <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50 px-3 py-2.5">
-                        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#5B21B6] text-xs font-extrabold text-white">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#1F7D5E] text-xs font-extrabold text-white">
                           D{dia.dia}
                         </span>
                         <input
-                          className="flex-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-[#5B21B6]"
+                          className="flex-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-[#1F7D5E]"
                           value={dia.recorrido}
                           onChange={(e) => setDia(dia.dia, { recorrido: e.target.value })}
                           placeholder="Ej: Benito Juárez → La Nevería"
                         />
                         <button
                           onClick={() => addItem(dia.dia)}
-                          className="flex shrink-0 items-center gap-1 rounded-lg bg-[#5B21B6] px-2.5 py-1.5 text-[11px] font-bold text-white transition hover:bg-[#4C1D95]"
+                          className="flex shrink-0 items-center gap-1 rounded-lg bg-[#1F7D5E] px-2.5 py-1.5 text-[11px] font-bold text-white transition hover:bg-[#0F3D2E]"
                         >
                           <Icono n="plus" s={12} c="#fff" />
                           Item
@@ -550,7 +550,7 @@ export default function PaqueteModal({
                             <div key={i} className="space-y-2 px-3 py-2.5">
                               <div className="flex gap-2">
                                 <input
-                                  className="min-w-0 flex-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs outline-none focus:border-[#5B21B6]"
+                                  className="min-w-0 flex-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs outline-none focus:border-[#1F7D5E]"
                                   value={it.texto}
                                   onChange={(e) => setItem(dia.dia, i, { texto: e.target.value })}
                                   placeholder="Ej: Sendero El Calvario · 8 km · 3 h"
@@ -645,7 +645,7 @@ export default function PaqueteModal({
                 </p>
                 <button
                   onClick={addComedor}
-                  className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[#5B21B6] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#4C1D95]"
+                  className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[#1F7D5E] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#0F3D2E]"
                 >
                   <Icono n="plus" s={13} c="#fff" />
                   Comedor
@@ -677,7 +677,7 @@ export default function PaqueteModal({
                       </select>
 
                       <input
-                        className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs outline-none focus:border-[#5B21B6]"
+                        className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs outline-none focus:border-[#1F7D5E]"
                         value={c.nombre}
                         onChange={(e) => setComedor(i, { nombre: e.target.value })}
                         placeholder="Ej: Restaurante Marlen"

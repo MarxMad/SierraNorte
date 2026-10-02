@@ -10,7 +10,7 @@ import { ETIQUETA_ROL } from '@/lib/permisos';
 const ROLES: Rol[] = ['admin', 'ventas', 'comunidad', 'finanzas'];
 
 const COLOR_ROL: Record<Rol, string> = {
-  admin: '#5B21B6',
+  admin: '#1F7D5E',
   ventas: '#2563EB',
   comunidad: '#1F7D5E',
   finanzas: '#B45309',

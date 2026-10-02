@@ -106,7 +106,7 @@ export default function ReservaExpediente({
             <button
               type="button"
               onClick={() => abrir(a.storage_path)}
-              className="flex-1 truncate text-left text-xs font-semibold text-[#5B21B6] hover:underline"
+              className="flex-1 truncate text-left text-xs font-semibold text-[#1F7D5E] hover:underline"
             >
               {a.nombre}
             </button>

@@ -63,10 +63,10 @@ export default function Encabezado({
                     key={v.id}
                     href={`${pathname}?${p.toString()}`}
                     className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-semibold transition ${
-                      activa ? 'bg-white text-[#5B21B6] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                      activa ? 'bg-white text-[#1F7D5E] shadow-sm' : 'text-gray-500 hover:text-gray-700'
                     }`}
                   >
-                    <Icono n={v.icono} s={14} c={activa ? '#5B21B6' : '#9CA3AF'} />
+                    <Icono n={v.icono} s={14} c={activa ? '#1F7D5E' : '#9CA3AF'} />
                     {v.label}
                   </Link>
                 );

@@ -41,7 +41,7 @@ export default function PanelReservas({
   return (
     <>
       <div className="mb-4 flex flex-wrap gap-3">
-        <Kpi icono="users" label="Reservas" valor={`${total} · ${pax} pax`} color="#5B21B6" />
+        <Kpi icono="users" label="Reservas" valor={`${total} · ${pax} pax`} color="#1F7D5E" />
         <Kpi icono="clipboard" label="Vendido" valor={dinero(vendido)} color="#6B7280" />
         <Kpi icono="wallet" label="Cobrado" valor={dinero(cobrado)} color="#16A34A" />
         <Kpi
@@ -113,7 +113,7 @@ export default function PanelReservas({
 
                         <div className="mb-1.5 flex flex-wrap items-center gap-1">
                           {r.mixto ? (
-                            <span className="rounded bg-violet-100 px-1.5 py-0.5 text-[9px] font-extrabold text-[#5B21B6]">
+                            <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[9px] font-extrabold text-[#1F7D5E]">
                               MIXTO
                             </span>
                           ) : (

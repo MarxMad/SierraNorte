@@ -152,7 +152,7 @@ export default function VentasVista({
         {vista === 'clientes' && (
           <>
             <div className="mb-3 flex flex-wrap items-center gap-2.5">
-              <Chip icono="ticket" label="Reservas" valor={rs.length} color="#5B21B6" />
+              <Chip icono="ticket" label="Reservas" valor={rs.length} color="#1F7D5E" />
               <Chip icono="users" label="Personas" valor={totalPax} color="#2563EB" />
               <Chip icono="child" label="Niños" valor={totalNinos} color="#B45309" />
             </div>
@@ -183,7 +183,7 @@ export default function VentasVista({
                     {rs.map((r) => (
                       <tr key={r.id} className="group border-t border-gray-100 hover:bg-gray-50">
                         <Td>
-                          <span className="rounded-md bg-violet-50 px-2 py-1 font-mono text-xs font-bold text-[#5B21B6]">
+                          <span className="rounded-md bg-emerald-50 px-2 py-1 font-mono text-xs font-bold text-[#1F7D5E]">
                             {r.codigo}
                           </span>
                         </Td>
@@ -395,7 +395,7 @@ export default function VentasVista({
                               </span>
                             ))}
                             {(p.comunidades ?? []).length > 2 && (
-                              <span className="rounded bg-violet-50 px-1.5 py-0.5 text-[11px] font-bold text-[#5B21B6]">
+                              <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[11px] font-bold text-[#1F7D5E]">
                                 +{(p.comunidades ?? []).length - 2}
                               </span>
                             )}
@@ -444,7 +444,7 @@ export default function VentasVista({
                               </div>
                             </Td>
                             <Td>
-                              <span className="font-mono font-bold text-[#5B21B6]">{r.codigo}</span>
+                              <span className="font-mono font-bold text-[#1F7D5E]">{r.codigo}</span>
                             </Td>
                             <Td>{r.personas} pax</Td>
                             <Td>{rango(r.fecha_inicio, r.fecha_fin)}</Td>

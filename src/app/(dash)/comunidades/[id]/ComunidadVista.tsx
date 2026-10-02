@@ -150,12 +150,12 @@ export default function ComunidadVista({
                 <span className="text-xs font-extrabold text-gray-700">Avance del tour completo</span>
                 <span
                   className="text-sm font-extrabold"
-                  style={{ color: abierto.avance_tour === 100 ? '#16A34A' : '#5B21B6' }}
+                  style={{ color: abierto.avance_tour === 100 ? '#16A34A' : '#1F7D5E' }}
                 >
                   {abierto.avance_tour}%
                 </span>
               </div>
-              <Barra pct={abierto.avance_tour} color={abierto.avance_tour === 100 ? '#16A34A' : '#5B21B6'} />
+              <Barra pct={abierto.avance_tour} color={abierto.avance_tour === 100 ? '#16A34A' : '#1F7D5E'} />
               <p className="mt-2 text-[11px] font-semibold text-gray-500">
                 {abierto.comunidades_listas}/{abierto.comunidades_del_tour} comunidades listas
               </p>
@@ -164,9 +164,9 @@ export default function ComunidadVista({
             {/* Checklist general del tour */}
             <div className="overflow-hidden rounded-xl border border-gray-200">
               <div className="flex items-center gap-2 border-b border-gray-100 bg-gray-50 px-3 py-2.5">
-                <Icono n="clipboard" s={14} c="#5B21B6" />
+                <Icono n="clipboard" s={14} c="#1F7D5E" />
                 <span className="flex-1 text-xs font-extrabold text-gray-700">General del tour</span>
-                <span className="rounded bg-violet-100 px-1.5 py-0.5 text-[9px] font-extrabold text-[#5B21B6]">
+                <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[9px] font-extrabold text-[#1F7D5E]">
                   SE CONFIRMA UNA VEZ
                 </span>
               </div>

@@ -102,7 +102,7 @@ function Login() {
                   required
                   autoComplete="name"
                   placeholder="Elena Ramírez"
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none transition focus:border-[#5B21B6] focus:ring-2 focus:ring-[#5B21B6]/15"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none transition focus:border-[#1F7D5E] focus:ring-2 focus:ring-[#1F7D5E]/15"
                 />
               </Campo>
             )}
@@ -114,7 +114,7 @@ function Login() {
                 required
                 autoComplete="email"
                 placeholder="tu@correo.com"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none transition focus:border-[#5B21B6] focus:ring-2 focus:ring-[#5B21B6]/15"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none transition focus:border-[#1F7D5E] focus:ring-2 focus:ring-[#1F7D5E]/15"
               />
             </Campo>
 
@@ -125,7 +125,7 @@ function Login() {
                 required
                 autoComplete={modo === 'entrar' ? 'current-password' : 'new-password'}
                 placeholder={modo === 'registro' ? 'Mínimo 8 caracteres' : '••••••••'}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none transition focus:border-[#5B21B6] focus:ring-2 focus:ring-[#5B21B6]/15"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none transition focus:border-[#1F7D5E] focus:ring-2 focus:ring-[#1F7D5E]/15"
               />
             </Campo>
 
@@ -143,7 +143,7 @@ function Login() {
             <button
               type="submit"
               disabled={pending}
-              className="w-full rounded-lg bg-[#5B21B6] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#4C1D95] disabled:opacity-60"
+              className="w-full rounded-lg bg-[#1F7D5E] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#0F3D2E] disabled:opacity-60"
             >
               {pending ? 'Un momento…' : modo === 'entrar' ? 'Entrar' : 'Crear cuenta'}
             </button>
@@ -153,7 +153,7 @@ function Login() {
             {modo === 'entrar' ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}{' '}
             <button
               onClick={() => setModo(modo === 'entrar' ? 'registro' : 'entrar')}
-              className="font-bold text-[#5B21B6] hover:underline"
+              className="font-bold text-[#1F7D5E] hover:underline"
             >
               {modo === 'entrar' ? 'Crear una' : 'Entrar'}
             </button>

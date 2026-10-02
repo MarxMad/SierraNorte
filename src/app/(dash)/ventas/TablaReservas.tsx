@@ -31,7 +31,7 @@ export default function TablaReservas({
             <tr
               key={r.id}
               onClick={() => onAbrir(r)}
-              className="cursor-pointer border-t border-gray-100 transition hover:bg-violet-50/40"
+              className="cursor-pointer border-t border-gray-100 transition hover:bg-emerald-50/40"
             >
               <td className="px-3 py-2.5">
                 <div className="flex items-center gap-2">

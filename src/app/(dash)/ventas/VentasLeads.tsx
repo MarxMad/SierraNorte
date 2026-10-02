@@ -116,7 +116,7 @@ export default function VentasLeads({
                       <button
                         type="button"
                         onClick={() => convertir(l.id)}
-                        className="rounded-lg bg-[#5B21B6] px-2.5 py-1 text-[11px] font-bold text-white"
+                        className="rounded-lg bg-[#1F7D5E] px-2.5 py-1 text-[11px] font-bold text-white"
                       >
                         → Reserva
                       </button>

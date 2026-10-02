@@ -87,7 +87,7 @@ export default function ReservaForm({
               <p className="text-[11px] font-bold uppercase tracking-wide text-gray-400">
                 {d.formCodigo}
               </p>
-              <p className="mt-1 font-mono text-2xl font-extrabold text-[#5B21B6]">{codigo}</p>
+              <p className="mt-1 font-mono text-2xl font-extrabold text-[#1F7D5E]">{codigo}</p>
             </div>
 
             {expiraAt && (

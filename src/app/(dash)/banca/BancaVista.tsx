@@ -151,7 +151,7 @@ export default function BancaVista({
                     {ps.map((p) => (
                       <tr key={p.id} className="border-t border-gray-100 hover:bg-gray-50">
                         <td className="px-3 py-2.5">
-                          <span className="rounded bg-violet-50 px-2 py-0.5 font-mono text-[11px] font-bold text-[#5B21B6]">
+                          <span className="rounded bg-emerald-50 px-2 py-0.5 font-mono text-[11px] font-bold text-[#1F7D5E]">
                             {p.codigo}
                           </span>
                         </td>
@@ -229,7 +229,7 @@ export default function BancaVista({
             <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Kpi icono="trendUp" label="Ingresos" valor={dinero(resumen.ingresos)} color="#16A34A" />
               <Kpi icono="wallet" label="Gastos" valor={dinero(resumen.gastos)} color="#FB923C" />
-              <Kpi icono="chart" label="Utilidad" valor={dinero(resumen.utilidad)} color="#5B21B6" />
+              <Kpi icono="chart" label="Utilidad" valor={dinero(resumen.utilidad)} color="#1F7D5E" />
               <Kpi icono="percent" label="Margen" valor={`${resumen.margen_pct}%`} color="#2563EB" />
             </div>
 

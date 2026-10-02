@@ -137,7 +137,7 @@ export function BotonAccion({
   icono,
   titulo,
   onClick,
-  color = '#5B21B6',
+  color = '#1F7D5E',
 }: {
   icono: string;
   titulo: string;
@@ -226,7 +226,7 @@ export function Vacio({ titulo, sub, icono = 'calendar' }: { titulo: string; sub
 export function Modal({
   titulo,
   sub,
-  color = '#5B21B6',
+  color = '#1F7D5E',
   icono,
   chip,
   onClose,
@@ -305,7 +305,7 @@ export function BtnPrimario({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex items-center gap-2 rounded-lg bg-[#5B21B6] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#4C1D95] disabled:opacity-50"
+      className="inline-flex items-center gap-2 rounded-lg bg-[#1F7D5E] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#0F3D2E] disabled:opacity-50"
     >
       {children}
     </button>
@@ -350,4 +350,4 @@ export function Campo({
 }
 
 export const inputCls =
-  'w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none transition focus:border-[#5B21B6] focus:ring-2 focus:ring-[#5B21B6]/15';
+  'w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none transition focus:border-[#1F7D5E] focus:ring-2 focus:ring-[#1F7D5E]/15';

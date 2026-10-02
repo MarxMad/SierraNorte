@@ -92,7 +92,7 @@ export default function Contabilidad({
           icono="chart"
           label="Saldo"
           valor={dinero(kpis.saldo)}
-          color={kpis.saldo >= 0 ? '#5B21B6' : '#DC2626'}
+          color={kpis.saldo >= 0 ? '#1F7D5E' : '#DC2626'}
         />
       </div>
 
@@ -161,7 +161,7 @@ export default function Contabilidad({
             key={s.id}
             onClick={() => setSub(s.id)}
             className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition ${
-              sub === s.id ? 'bg-white text-[#5B21B6] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              sub === s.id ? 'bg-white text-[#1F7D5E] shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             {s.label}
@@ -210,7 +210,7 @@ export default function Contabilidad({
                       <td className="px-3 py-2.5 text-xs text-gray-600">{m.concepto}</td>
                       <td className="px-3 py-2.5">
                         {m.con_factura && m.folio ? (
-                          <span className="rounded bg-violet-50 px-2 py-0.5 font-mono text-[11px] font-bold text-[#5B21B6]">
+                          <span className="rounded bg-emerald-50 px-2 py-0.5 font-mono text-[11px] font-bold text-[#1F7D5E]">
                             {m.folio}
                           </span>
                         ) : (
@@ -287,7 +287,7 @@ export default function Contabilidad({
                       <td className="px-3 py-2.5 text-xs text-gray-600">{g.concepto}</td>
                       <td className="px-3 py-2.5">
                         {g.con_factura && g.folio ? (
-                          <span className="rounded bg-violet-50 px-2 py-0.5 font-mono text-[11px] font-bold text-[#5B21B6]">
+                          <span className="rounded bg-emerald-50 px-2 py-0.5 font-mono text-[11px] font-bold text-[#1F7D5E]">
                             {g.folio}
                           </span>
                         ) : (

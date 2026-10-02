@@ -97,7 +97,7 @@ export default function CalendarioVista({ eventos }: { eventos: EventoCalendario
           </button>
           <button
             onClick={() => { setMes(hoy.getMonth()); setAnio(hoy.getFullYear()); }}
-            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-[#5B21B6] transition hover:bg-gray-50"
+            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-[#1F7D5E] transition hover:bg-gray-50"
           >
             Hoy
           </button>
@@ -106,9 +106,9 @@ export default function CalendarioVista({ eventos }: { eventos: EventoCalendario
             onClick={() => setSoloReservas((v) => !v)}
             className="rounded-lg border-2 px-3 py-1.5 text-xs font-bold transition"
             style={{
-              borderColor: soloReservas ? '#5B21B6' : '#E5E7EB',
-              background: soloReservas ? hexA('#5B21B6', 0.1) : '#fff',
-              color: soloReservas ? '#5B21B6' : '#6B7280',
+              borderColor: soloReservas ? '#1F7D5E' : '#E5E7EB',
+              background: soloReservas ? hexA('#1F7D5E', 0.1) : '#fff',
+              color: soloReservas ? '#1F7D5E' : '#6B7280',
             }}
           >
             Sólo reservas
@@ -129,7 +129,7 @@ export default function CalendarioVista({ eventos }: { eventos: EventoCalendario
             <span className="ml-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-gray-500">
               <span
                 className="h-2 w-2 rounded-sm border-2 border-dashed"
-                style={{ borderColor: '#5B21B6' }}
+                style={{ borderColor: '#1F7D5E' }}
               />
               Reserva
             </span>
@@ -173,7 +173,7 @@ export default function CalendarioVista({ eventos }: { eventos: EventoCalendario
                         <span
                           className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
                             esHoy(d)
-                              ? 'bg-[#5B21B6] text-white'
+                              ? 'bg-[#1F7D5E] text-white'
                               : finde
                                 ? 'text-gray-300'
                                 : 'text-gray-600'

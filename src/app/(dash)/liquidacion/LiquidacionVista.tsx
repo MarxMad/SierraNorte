@@ -96,7 +96,7 @@ export default function LiquidacionVista({
             <div className="mb-4 flex flex-wrap gap-3">
               <Kpi icono="clipboard" label="Vendido" valor={dinero(totalIngreso)} color="#6B7280" />
               <Kpi icono="wallet" label="Cobrado" valor={dinero(totalCobrado)} color="#16A34A" />
-              <Kpi icono="receipt" label="Costo a liquidar" valor={dinero(totalCosto)} color="#5B21B6" />
+              <Kpi icono="receipt" label="Costo a liquidar" valor={dinero(totalCosto)} color="#1F7D5E" />
               <Kpi icono="clock" label="Pendiente de pago" valor={dinero(totalPend)} color="#FB923C" />
               <Kpi
                 icono="trendUp"
@@ -400,7 +400,7 @@ function CobrosTabla({
               return (
                 <tr key={c.id} className="border-t border-gray-100 hover:bg-gray-50">
                   <td className="px-3 py-2.5">
-                    <span className="rounded bg-violet-50 px-2 py-0.5 font-mono text-[11px] font-bold text-[#5B21B6]">
+                    <span className="rounded bg-emerald-50 px-2 py-0.5 font-mono text-[11px] font-bold text-[#1F7D5E]">
                       {c.codigo}
                     </span>
                   </td>

@@ -165,7 +165,7 @@ export default function ReservaModal({
           : `${d.codigo} · ${d.personas} pax${d.ninos ? ` · ${d.num_ninos} niños` : ''}`
       }
       icono="user"
-      color="#5B21B6"
+      color="#1F7D5E"
       chip={!nueva && d.status ? <Pill texto={d.status} color={COLOR_STATUS[d.status]} solid /> : undefined}
       onClose={onClose}
       footer={
@@ -179,7 +179,7 @@ export default function ReservaModal({
     >
       <div className="space-y-4">
         {!nueva && (
-          <div className="rounded-lg bg-violet-50 px-3 py-2 font-mono text-sm font-bold text-[#5B21B6]">
+          <div className="rounded-lg bg-emerald-50 px-3 py-2 font-mono text-sm font-bold text-[#1F7D5E]">
             {d.codigo}
           </div>
         )}
@@ -335,9 +335,9 @@ export default function ReservaModal({
               disabled={!precio}
               className="rounded-lg border-2 px-2.5 py-1 text-[11px] font-bold transition disabled:opacity-40"
               style={{
-                borderColor: dividido ? '#5B21B6' : '#E5E7EB',
-                background: dividido ? hexA('#5B21B6', 0.1) : '#fff',
-                color: dividido ? '#5B21B6' : '#6B7280',
+                borderColor: dividido ? '#1F7D5E' : '#E5E7EB',
+                background: dividido ? hexA('#1F7D5E', 0.1) : '#fff',
+                color: dividido ? '#1F7D5E' : '#6B7280',
               }}
             >
               {dividido ? 'Un solo método' : 'Dividir el pago'}
@@ -396,7 +396,7 @@ export default function ReservaModal({
 
           {/* ---- Pago dividido ---- */}
           {dividido && (
-            <div className="space-y-2 rounded-xl border-2 border-violet-200 bg-violet-50/40 p-3">
+            <div className="space-y-2 rounded-xl border-2 border-emerald-200 bg-emerald-50/40 p-3">
               {reparto.map((l, i) => (
                 <div key={i} className="rounded-xl border border-gray-200 bg-white p-2.5">
                   <div className="flex flex-wrap items-center gap-2">

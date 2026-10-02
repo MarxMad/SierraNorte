@@ -110,16 +110,16 @@ export default function GastoModal({
               onClick={() => setConFactura(val as boolean)}
               className="flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-xs font-bold transition"
               style={{
-                borderColor: d.con_factura === val ? '#5B21B6' : '#E5E7EB',
-                background: d.con_factura === val ? hexA('#5B21B6', 0.1) : '#fff',
-                color: d.con_factura === val ? '#5B21B6' : '#6B7280',
+                borderColor: d.con_factura === val ? '#1F7D5E' : '#E5E7EB',
+                background: d.con_factura === val ? hexA('#1F7D5E', 0.1) : '#fff',
+                color: d.con_factura === val ? '#1F7D5E' : '#6B7280',
               }}
             >
               <span
                 className="h-3 w-3 rounded-full border-2"
                 style={{
-                  borderColor: d.con_factura === val ? '#5B21B6' : '#CBD5E1',
-                  background: d.con_factura === val ? '#5B21B6' : '#fff',
+                  borderColor: d.con_factura === val ? '#1F7D5E' : '#CBD5E1',
+                  background: d.con_factura === val ? '#1F7D5E' : '#fff',
                   boxShadow: d.con_factura === val ? 'inset 0 0 0 2px #fff' : 'none',
                 }}
               />
@@ -159,7 +159,7 @@ export default function GastoModal({
         <div className="grid gap-4 sm:grid-cols-2">
           <Campo label="Folio de factura" icono="ticket" req={d.con_factura}>
             <input
-              className={`${inputCls} font-mono font-bold ${!d.con_factura ? 'bg-gray-50 text-gray-300' : 'text-[#5B21B6]'}`}
+              className={`${inputCls} font-mono font-bold ${!d.con_factura ? 'bg-gray-50 text-gray-300' : 'text-[#1F7D5E]'}`}
               value={d.folio ?? ''}
               disabled={!d.con_factura}
               onChange={(e) => set({ folio: e.target.value })}
@@ -230,7 +230,7 @@ export default function GastoModal({
             </Campo>
             <div>
               <span className="mb-1.5 block text-xs font-bold text-gray-700">Total</span>
-              <div className="rounded-lg border-2 border-violet-200 bg-violet-50 px-3 py-2.5 text-right text-base font-extrabold text-[#5B21B6]">
+              <div className="rounded-lg border-2 border-emerald-200 bg-emerald-50 px-3 py-2.5 text-right text-base font-extrabold text-[#1F7D5E]">
                 {dinero(total)}
               </div>
             </div>

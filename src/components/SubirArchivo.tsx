@@ -118,11 +118,11 @@ export default function SubirArchivo({
         }}
         className="flex w-full flex-col items-center gap-1.5 rounded-xl border-2 border-dashed px-4 py-6 transition disabled:cursor-wait"
         style={{
-          borderColor: arrastra ? '#5B21B6' : '#D1D5DB',
+          borderColor: arrastra ? '#1F7D5E' : '#D1D5DB',
           background: arrastra ? '#F5F3FF' : '#fff',
         }}
       >
-        <Icono n={subiendo ? 'clock' : 'upload'} s={22} c={arrastra ? '#5B21B6' : '#9CA3AF'} />
+        <Icono n={subiendo ? 'clock' : 'upload'} s={22} c={arrastra ? '#1F7D5E' : '#9CA3AF'} />
         <span className="text-xs font-bold text-gray-600">
           {subiendo ? 'Subiendo…' : etiqueta}
         </span>
