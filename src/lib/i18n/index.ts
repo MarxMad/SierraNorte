@@ -166,7 +166,7 @@ export const DICT = {
     formEnviar: 'Apartar ahora',
     formEnviando: 'Apartando…',
     formLegal:
-      'Tu lugar queda apartado 72 horas. Te contactamos para confirmar el depósito y forma de pago.',
+      'Tu lugar queda apartado 8 horas. Te contactamos para confirmar el depósito y forma de pago.',
     formOkTitulo: 'Lugar apartado',
     formOkSub: (mail: string) =>
       `Te escribimos a ${mail} para confirmar el depósito. Si no pagas a tiempo, el cupo se libera.`,
@@ -288,7 +288,7 @@ export const DICT = {
     formEnviar: 'Hold spot',
     formEnviando: 'Holding…',
     formLegal:
-      'Your spot is held for 72 hours. We will contact you to confirm deposit and payment.',
+      'Your spot is held for 8 hours. We will contact you to confirm deposit and payment.',
     formOkTitulo: 'Spot held',
     formOkSub: (mail: string) =>
       `We will email ${mail} to confirm your deposit. Unpaid holds are released automatically.`,

@@ -5,9 +5,9 @@ import { createClient } from '@/lib/supabase/server';
 
 // =====================================================================
 // Acciones del sitio público (sin sesión).
-// La única escritura que permite un visitante es solicitar una reserva,
-// y pasa por la función `solicitar_reserva` de la base, que controla el
-// precio y fuerza el status a 'Planeación'.
+// La única escritura que permite un visitante es apartar una reserva,
+// y pasa por la función `apartar_reserva` de la base, que controla el
+// precio, revisa el cupo y deja el status en 'Apartado' con vencimiento.
 // =====================================================================
 
 export type ResultadoReserva = {
@@ -64,7 +64,7 @@ export async function solicitarReserva(datos: {
     p_fecha: datos.fecha,
     p_notas: datos.notas,
     p_origen_comunidad_id: datos.origenComunidadId ?? null,
-    p_horas_hold: 72,
+    p_horas_hold: 8,
   });
 
   if (error) {
