@@ -23,3 +23,13 @@ next-env.d.ts
 .vscode/
 .idea/
 .vercel
+
+# Material de referencia, no es código del proyecto:
+# la página guardada del navegador y el prototipo suelto del cinemático.
+Sierra Norte.html
+Sierra Norte_files/
+Sierra Norte cinematic scroll/
+
+# El zip de láminas es un empaquetado de docs/presentacion/laminas/*.png.
+# Se regenera cuando se necesite enviar la presentación.
+*.zip

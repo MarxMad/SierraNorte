@@ -1,622 +1,729 @@
-# Expediciones Sierra Norte — Propuesta integral  
-## Plataforma única: sitio público + operación (reemplazo Monday, Trello y Excel)
+# Expediciones Sierra Norte — Anexo técnico (v8)
+## Detalle de la propuesta en diapositivas
 
-**Cliente:** Cooperativa Expediciones Sierra Norte — Pueblos Mancomunados, Oaxaca  
-**Tarifa desarrollo:** **USD 15.00 / hora**  
-**Inicio del plan:** **lunes 3 de agosto de 2026**  
-**Go-live objetivo:** **domingo 27 de septiembre de 2026** (8 semanas, 12 h/semana)  
+**Cliente:** Cooperativa Expediciones Sierra Norte — Pueblos Mancomunados, Oaxaca
+**Paquete único:** **$40,000 MXN** · 329 h · anticipo de $10,000 + 3 mensualidades de $10,000
+**Sin etapa 2:** todo el alcance va incluido — agente de WhatsApp, panel fiscal, timbrado e historial
+**Arranque tentativo:** lunes 17 de agosto de 2026, al confirmar Sierra Norte · **Cierre:** domingo 15 de noviembre de 2026
+**Ritmo:** **~24 h/semana** · 13 semanas · entrega en producción cada mes
 **Sitio actual:** [sierra-norte.vercel.app](https://sierra-norte.vercel.app)
 
-Este documento concentra **arquitectura, funcionamiento, plan de trabajo, precios, costos mensuales de servicios, cronograma con fechas, migración Monday y checklist de precios**. No hace falta abrir otros archivos para presentar la propuesta.
+> **Cómo se usa este documento.** La presentación (`docs/presentacion/propuesta-esn.html`, 20
+> diapositivas) es lo que se muestra en la reunión. Este anexo es el detalle técnico: qué se
+> toca en la base de datos, qué tablas y vistas nuevas hacen falta y el desglose de horas.
+> Los números de los dos documentos son los mismos; si cambia uno, cambia el otro.
+
+### Qué cambió en la v6
+
+**Arquitectura de varios sitios.** La propuesta ya no es «un sitio con micrositios», sino
+**una plataforma con varias fachadas**:
+
+| Fachada | Cuántos | Quién es |
+|---|---:|---|
+| Expediciones Sierra Norte | 1 | La marca que vende los viajes, ES/EN |
+| Pueblos Mancomunados | 1 | **Nuevo** — la casa común de las comunidades |
+| Página de cada pueblo | 8 | Con su logo, sus fotos y sus experiencias |
+| **Plataforma de gestión** | 1 | **La administra Sierra Norte**; aquí se concentra todo |
+
+Las diez fachadas leen y escriben contra **el mismo catálogo y el mismo calendario**: una
+reserva hecha en la página de Latuvi descuenta el inventario en todas las demás al instante,
+y aterriza en la plataforma con su folio y su `origen`. Técnicamente es **una sola app y una
+sola base**, con enrutamiento por dominio — no diez proyectos separados.
+
+**WhatsApp automático en el alcance base.** Antes era opcional. Ahora es
+un eje de la propuesta: envío al confirmarse el anticipo, recordatorio 3 días antes, aviso de
+cambios, insistencia si no hay acuse, y bitácora de lo enviado. Requiere WhatsApp Cloud API,
+un número a nombre de la cooperativa y plantillas aprobadas por Meta (**el trámite tarda: se
+inicia la semana 1**). Tiene costo por mensaje, aparte del OPEX.
+
+**Se quitaron las comparaciones «antes / ahora» de la presentación.** Al cliente le resultaban
+presuntuosas: la cooperativa ya opera bien. El deck ahora sólo enuncia la solución, con
+énfasis en **velocidad**. Este anexo conserva el detalle técnico.
+
+**Logos y material audiovisual** entran como requisito explícito: logo de Sierra Norte, de
+Pueblos Mancomunados y de cada uno de los 8 pueblos, más fotos, video y texto propios de cada
+comunidad. Lo aporta la cooperativa.
+
+### Nuevo en la v7
+
+**Agente de WhatsApp (dentro del paquete · 36 h).** Un agente conversacional en el WhatsApp de
+entrada que califica al prospecto, consulta **cupo y hospedaje reales**, propone sólo los
+paquetes que sí caben y aparta 72 h con la misma RPC que la web. El prospecto cae en
+`leads` con la conversación completa y **ventas confirma a mano antes de cobrar**: el agente
+no cierra ventas ni cobra.
+
+```
+conversaciones      (id, telefono, canal, estado, lead_id, resumen, created_at)
+conversacion_turnos (id, conversacion_id, rol, texto, herramienta, payload, created_at)
+```
+
+Desglose: webhook de WhatsApp entrante y manejo de conversación 8 h · agente con acceso al
+catálogo y a `disponibilidad()` por tool-calling 12 h · creación de prospecto y apartado
+tentativo 6 h · bandeja en el panel de ventas y traspaso a persona 6 h · pruebas y ajuste
+del guion 4 h.
+
+**Implica IA en producción**, que hasta ahora no había. Costo aparte del OPEX: entre **$300
+y $800 MXN/mes** según volumen de conversaciones. Se enciende al final del proyecto a propósito — el agente sólo sirve si el catálogo y la
+disponibilidad ya están al día.
+
+**Portada mejorada (hecho en este repo).** La sección de comunidades de la landing ahora dice
+«N pueblos, cada uno con su sitio» y cada tarjeta lleva un botón visible **«Ver su sitio →»**
+(`pueblosSitio` en `src/lib/i18n/index.ts`, ES y EN). Las tarjetas subieron de `h-40` a `h-48`
+para que quepa. Verificado con `tsc` y en local. **Falta desplegarlo.**
+
+**Capturas del dashboard.** Ya hay dos reales en la presentación: la tabla de reservas y el
+alta de reserva. Falta una de liquidación o de banca.
+
+### Un solo lenguaje visual (hecho en este repo)
+
+El cliente notó un riesgo real: la presentación muestra pantallas con un diseño que la
+aplicación no tenía. Si el deck promete una imagen y el producto entrega otra, se ve mal.
+
+**Diagnóstico.** El sitio público ya usaba el verde de marca (`#1F7D5E`, `#0F3D2E`). El
+tablero interno era gris + esmeralda, pero con un **acento violeta** (`#5B21B6` y `#4C1D95`)
+que desentonaba con todo lo demás.
+
+**Hecho:** se sustituyó el violeta por el verde de marca en toda la aplicación —
+90 reemplazos en `src/app/(dash)`, `src/components`, `src/lib`, `src/app/login` e
+`src/app/inicio`, incluidos los tintes `violet-50/100/200` → `emerald-*`. Verificado con
+`tsc` y en local. Se dejó intacta la paleta `AVATAR_COLORS` de `src/lib/tipos.ts`, que sí
+debe variar por cliente. **Falta desplegarlo.**
+
+**Pendiente de decidir — armonización completa (~32 h).** El color ya cuadra, pero para que
+el tablero se vea igual que la presentación falta la tipografía, los radios, las sombras y
+los componentes base:
+
+| Tarea | h |
+|---|---:|
+| Tokens compartidos (color, tipografía, radios, sombras) en `globals.css` | 6 |
+| Componentes base del tablero: botones, tarjetas, tablas, píldoras, modales, formularios | 12 |
+| Pasar las pantallas existentes: ventas, banca, liquidación, calendario, comunidades, admin | 10 |
+| Alinear el sitio público a los mismos tokens | 4 |
+| **Total** | **32** |
+
+**Lo que no cuesta nada:** las pantallas nuevas (botón de liquidar, portal de comunidad,
+panel fiscal, agente) **se construyen directamente en el diseño de la presentación**. El
+costo de 32 h es sólo por rehacer la piel de lo que ya existe.
+
+Con esas 32 h el paquete pasaría de 329 a **361 h**, es decir **~$111/hora** y **~26 h/semana**.
+Es la primera candidata a recortar si el ritmo no se sostiene: se puede hacer una versión
+ligera (sólo tokens y botones, ~14 h) que ya acerca mucho sin rehacer pantallas.
+
+### La decisión tomada: todo incluido, $40,000, en 3 meses
+
+Se planteó dos veces que el alcance no cabía en el precio y se ofrecieron alternativas
+(alargar a diciembre, subir el precio, o dejar parte para una segunda etapa). **El
+desarrollador decidió meter todo el alcance en $40,000 cerrando el 15 de noviembre.**
+Queda registrado con sus números reales:
+
+| | |
+|---|---:|
+| Alcance total | **329 h** |
+| Ya invertido y en producción | 20 h |
+| Pendiente | **309 h** |
+| Plazo | 13 semanas (17 ago – 15 nov 2026) |
+| **Ritmo real necesario** | **~24 h/semana** |
+| Precio | $40,000 MXN |
+| **Tarifa efectiva** | **~$122/hora** (≈ 6.5 USD/h) |
+
+Contra la referencia inicial de $186/h, son **$64/hora menos**. Y 24 h/semana durante trece
+semanas seguidas es prácticamente una jornada de medio tiempo. **Es una decisión comercial
+consciente**, tomada con los números a la vista, no un error de estimación.
+
+**Lo que ya no queda por vender.** Al meter todo en el paquete, no hay módulos de segunda
+etapa que cotizar después. El ingreso posterior sale del **retainer de soporte**
+($1,100–$1,900/mes) y de lo que se cotice como nuevo a partir del acta.
+
+**Plan B acordado de antemano.** Si el ritmo no se sostiene, se recorre el calendario a 18
+semanas y se cierra a más tardar el 27 de diciembre, con el mismo precio y el mismo alcance.
+Queda escrito en la cláusula 6 del acuerdo de colaboración, no se anuncia sobre la marcha.
+
+**Riesgo que hay que vigilar.** El panel fiscal depende de datos que hoy no existen: cuáles
+son exactamente las ocho comunidades, su RFC y su régimen. Si eso no llega al arranque, esa
+fase se atora aunque todo lo demás avance. Es el primer punto del kickoff.
+
+**Fechas tentativas.** El arranque del 17 de agosto está sujeto a que Sierra Norte confirme
+la colaboración y firme. Si la confirmación llega después, todas las fechas se recorren la
+misma cantidad de días (cláusula 6 del acuerdo).
+
+---
+
+### Qué cambió en la v5
+
+**Corrección de encuadre.** La cooperativa **ya tiene reservas en línea funcionando**. Las
+versiones anteriores lo planteaban como si hubiera que construirlo. El problema real es
+otro y es más acotado:
+
+1. La solicitud del sitio **no entra sola al control interno** — alguien la recaptura.
+2. **No se puede cobrar sólo el 20 % de anticipo**: se manda un enlace de PayPal, que es
+   todo o nada y con una de las comisiones más caras del mercado.
+3. La disponibilidad **se cruza aparte**, fuera del sistema.
+
+**Bug corregido en este repo.** `src/proxy.ts` no incluía `/pueblos` en la lista de rutas
+públicas: los 10 micrositios estaban enlazados desde la portada **y declarados en
+`sitemap.ts` para Google**, pero al abrirlos redirigían a `/login`. Se agregó
+`sinIdioma.startsWith('/pueblos')`. Verificado en local: `/pueblos/cuajimoloyas` pasó de
+307 a 200. **Falta desplegarlo a producción.**
+
+**Micrositios.** Pasan a ser un eje de la propuesta: 8 páginas (una por pueblo mancomunado,
+más 2 comunidades aliadas ya cargadas), todas contra el mismo catálogo y el mismo cupo, y
+cada reserva guarda de qué micrositio salió.
+
+**Contenido audiovisual.** Hoy los micrositios repiten las mismas fotos entre experiencias.
+El material propio de cada pueblo —fotos, video y texto— **lo aporta la cooperativa**; queda
+en la lista de responsabilidades y no cambia el precio.
+
+Además, en la ronda anterior se agregaron cuatro cosas y se reordenó todo:
+
+1. **Botón de liquidación por comunidad y fecha**, con método de pago, descuento, monto y
+   export a Excel para cotejar.
+2. **Los servicios de la salida son editables.** El paquete es el plan; el viaje es lo que
+   pasó. Cambio de fondo en el modelo — ver §3.
+3. **Usuario propio para cada comunidad**, que ve sólo su itinerario, sus clientes, sus
+   fechas y **sus ingresos del mes por rubro**.
+4. **El aviso por WhatsApp lo dispara reservaciones** una vez confirmado el anticipo.
+
+**Precio:** se pasa de tarifa por hora a **precio cerrado en pesos** ($40,000 + $12,000
+opcional), que equivale a ~$186 MXN/hora — la misma tarifa de referencia de la v2, sin
+riesgo de tipo de cambio para la cooperativa.
+
+**Orden de trabajo:** se entregan primero los dos dolores más grandes —el aviso al pueblo y
+el botón de liquidar— y se deja el cobro en línea para el segundo mes. Hoy ya cobran, aunque
+caro; lo que hoy cuesta trabajo es **armar y mandar el aviso pueblo por pueblo, sin que quede
+constancia de que llegó**, y **rehacer la liquidación a mano**.
+
+**Plazo:** cerrar en **3 meses**. Con el alcance final son **309 horas pendientes en 13
+semanas**, o sea **~24 h/semana**. No deja holgura alguna: si el taller de precios de la
+primera semana se recorre, se recorre todo el calendario. Ver riesgos.
+
+**El panel fiscal** depende del contador y de datos que aún no están definidos (cuáles son
+las ocho comunidades, su RFC y su régimen). Va dentro del paquete, pero es la fase con más
+riesgo de atorarse.
 
 ---
 
 ## 1. Resumen en números
 
-```mermaid
-pie showData
-    title Presupuesto proyecto (USD 15/h)
-    "Ya invertido (20 h)" : 300
-    "Pendiente desarrollo (84 h)" : 1260
-    "Pendiente acompañamiento (12 h)" : 180
-```
-
-| Concepto | Horas | USD |
+| Paquete único — todo incluido | Horas | MXN |
 |---|---:|---:|
-| Ya invertido (sprint reciente en repo, con IA) | 20 | 300 |
-| Pendiente — desarrollo | 84 | 1,260 |
-| Pendiente — taller, capacitaciones, reuniones | 12 | 180 |
-| **Total proyecto hasta go-live** | **116** | **1,740** |
-| **Por cobrar ahora (pendiente)** | **96** | **1,440** |
+| Ya invertido y en producción | 20 | — |
+| Pendiente — desarrollo | 297 | — |
+| Pendiente — capacitaciones y reuniones | 12 | — |
+| **Total** | **329** | **$40,000** |
 
-| OPEX mensual (operación normal) | USD/mes |
+Tarifa implícita: **~$122 MXN/hora**. No hay etapa 2: todo el alcance va en el paquete.
+
+| Costo mensual de operar | MXN/mes |
 |---|---:|
-| Vercel Pro + Supabase Pro + dominio (+ email opcional) | **46–67** |
-| Escenario mínimo (Hobby + Free) | **~1** (no recomendado en temporada) |
+| Vercel Pro + Supabase Pro + dominio + correos | **$900 – $1,500** |
+| Mensajes de WhatsApp Business | según volumen |
+| IA del agente conversacional | **$300 – $800** |
+| Escenario mínimo (planes gratuitos) | ~$20 — sin respaldos, no recomendado en temporada |
+| Comisiones de la pasarela | variables sobre lo cobrado en línea |
 
-**Metodología:** horas realistas con desarrollo asistido por IA (~20 h para el avance actual del repo). Textos/fotos de pueblos y validación contable son principalmente responsabilidad de la cooperativa.
+| Soporte después del cierre (opcional) | h/mes | MXN/mes |
+|---|---:|---:|
+| Estándar | 6 | $1,100 |
+| Temporada alta | 10 | $1,900 |
 
 ---
 
-## 2. Visión del producto
+## 2. El circuito
 
 ```mermaid
 flowchart TB
-  subgraph publico [Sitio público ES / EN]
-    Global[Landing global]
-    Micro[Micrositio por pueblo x10]
-    Exp[33 experiencias + itinerario]
-    Apartado[Apartado 72 h cupo sincronizado]
+  subgraph pub [Sitio publico ES / EN]
+    Cat[Catalogo 33 paquetes]
+    Disp[Consulta de disponibilidad]
+    Form[Reserva + datos fiscales]
+    Pay[Anticipo 20 por ciento en linea]
   end
-  subgraph operacion [Dashboard por rol]
-    Ventas[Ventas leads tabla transportes]
-    Banca[Banca pagos conciliacion]
-    Liq[Liquidacion derivada]
-    Quincena[Reporte quincena Excel]
-    Com[Comunidades checklist]
-    Cal[Calendario]
+  subgraph ope [Dashboard]
+    Ven[Ventas]
+    Con[Conciliacion de pagos]
+    Des[Despacho por WhatsApp]
+    Liq[Boton de liquidar]
+    Fac[Facturacion]
   end
-  subgraph datos [Supabase PostgreSQL]
-    Reservas[reservas + leads]
-    Pagos[pagos + factura]
-    Cat[catalogo precios costos]
-    Vistas[v_liquidacion v_banca]
-    Files[Storage expedientes]
+  subgraph com [Portal de la comunidad]
+    Ord[Orden de servicio por token]
+    Mis[Mis llegadas y mi itinerario]
+    Ing[Mis ingresos del mes por rubro]
   end
-  Global --> Apartado
-  Micro --> Apartado
-  Exp --> Apartado
-  Apartado --> Reservas
-  Ventas --> Reservas
-  Banca --> Pagos
-  Pagos --> Reservas
-  Liq --> Vistas
-  Quincena --> Vistas
-  Com --> Cat
-  Ventas --> Files
+  subgraph db [Supabase PostgreSQL]
+    Inv[(Inventario hospedaje)]
+    Res[(reservas + plan de pago)]
+    Sal[(salida_servicios)]
+    Pag[(pagos)]
+  end
+  Cat --> Disp --> Form --> Pay
+  Disp <--> Inv
+  Form --> Res
+  Pay --> Pag --> Res
+  Res --> Sal
+  Ven --> Res
+  Con --> Pag
+  Res --> Des --> Ord
+  Ord --> Sal
+  Sal --> Liq
+  Sal --> Mis
+  Sal --> Ing
+  Pag --> Fac
 ```
 
-**Principios**
+**Los cinco principios**
 
-1. **Una sola fuente de verdad:** Postgres; Monday/Trello/Excel dejan de capturar datos duplicados.  
-2. **Liquidación derivada:** no hay tabla “liquidación” manual; se calcula desde catálogo + pax reales.  
-3. **Diez pueblos, un sistema:** mismo backend; rol `comunidad` ve solo su `comunidad_id`.  
-4. **Apartado global = apartado micrositio:** misma RPC `apartar_reserva`, mismo cupo.
+1. **Una sola fuente de verdad.** Postgres. Monday, Trello y Excel dejan de capturar.
+2. **El paquete es el plan; `salida_servicios` es lo que pasó.** De ahí sale la liquidación.
+3. **Un solo inventario de hospedaje** para todos los paquetes que comparten la misma cama.
+4. **Cada comunidad ve lo suyo.** Cambio de política — ver §4.
+5. **El permiso vive en la base**, con RLS por renglón y vistas para esconder columnas.
 
 ---
 
-## 3. Arquitectura técnica
+## 3. El cambio de fondo: los servicios reales de la salida
 
-### 3.1 Capas e infraestructura
+Hasta hoy la liquidación se derivaba **del catálogo**: `v_liquidacion_conceptos` unía
+comedores, ítems del itinerario, transporte y anfitrión, y multiplicaba por los pax. Eso es
+correcto mientras el viaje salga como se vendió — y el cliente dice que **muchas veces no**.
+Un grupo cambia la caminata por una van; otro pide una comida extra.
 
-```mermaid
-flowchart TB
-  subgraph usuarios [Usuarios]
-    Turista[Turista web]
-    Ventas[Rol ventas / admin]
-    Finanzas[Rol finanzas]
-    Pueblo[Coordinador comunidad]
-  end
+La liquidación ahora se deriva de una **capa intermedia editable** que nace del catálogo:
 
-  subgraph vercel [Vercel]
-    CDN[CDN Edge]
-    Next[Next.js 16 App Router]
-    Cron[Cron cada hora]
-    API[API cron + Server Actions]
-  end
-
-  subgraph supabase [Supabase]
-    Auth[Auth JWT cookies SSR]
-    PG[(PostgreSQL + RLS)]
-    RPC[RPC apartar_reserva]
-    ST[Storage expedientes]
-  end
-
-  Turista --> CDN --> Next
-  Ventas --> CDN --> Next
-  Finanzas --> CDN --> Next
-  Pueblo --> CDN --> Next
-  Next --> Auth
-  Next --> PG
-  Next --> RPC
-  Next --> ST
-  Cron --> API --> PG
+```sql
+-- se puebla al confirmar la reserva, copiando del catálogo; después se edita
+create table salida_servicios (
+  id              uuid primary key default gen_random_uuid(),
+  reserva_id      uuid not null references reservas(id) on delete cascade,
+  dia             int  not null default 1,
+  fecha           date,                              -- fecha real; alimenta el filtro por rango
+  comunidad_id    text references comunidades(id) on delete set null,
+  rubro           tipo_liquidacion,                  -- reutiliza el enum que ya existe
+  concepto        text not null,
+  cantidad        numeric(12,2) not null default 1,
+  unitario        numeric(12,2) not null default 0,
+  por_persona     boolean not null default false,
+  descuento_pct   numeric(5,2)  not null default 0,
+  descuento_monto numeric(12,2) not null default 0,
+  monto           numeric(12,2) generated always as (
+                    round(cantidad * unitario * (1 - descuento_pct/100) - descuento_monto, 2)
+                  ) stored,
+  origen          text not null default 'catalogo'
+                    check (origen in ('catalogo','ajuste','extra')),
+  item_ref        uuid,                              -- de qué itinerario_item o comedor nació
+  activo          boolean not null default true,     -- false = quitado, con su motivo
+  motivo_cambio   text,
+  metodo_pago     metodo_pago,                       -- efectivo / transferencia / pago en comunidad
+  liquidado       boolean not null default false,
+  liquidado_el    timestamptz,
+  comprobante_url text,
+  prestado        boolean,                           -- lo confirma la comunidad
+  cantidad_real   numeric(12,2),                     -- si iban 8 y llegaron 6
+  creado_por      uuid references perfiles(user_id) on delete set null,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+create index on salida_servicios (comunidad_id, fecha);
+create index on salida_servicios (reserva_id);
 ```
 
-### 3.2 Stack tecnológico
+**Función `generar_servicios_salida(reserva_id)`** — copia del catálogo (comedores,
+`itinerario_items` con `tipo` no nulo, transporte y anfitrión), multiplicando por los pax
+donde `por_persona`. Se dispara al pasar la reserva a `Confirmado` y es idempotente.
 
-| Capa | Tecnología |
-|---|---|
-| UI | React 19, Tailwind CSS 4 |
-| Aplicación | Next.js 16.2 (App Router, Server Components, Server Actions) |
-| Base de datos | PostgreSQL en Supabase (21 migraciones SQL, triggers, enums) |
-| Autenticación | Supabase Auth + `@supabase/ssr` |
-| Archivos | Supabase Storage (bucket `expedientes`) |
-| Hosting | Vercel (previews, producción, cron en `vercel.json`) |
-| IA en producción | **Ninguna** (opcional futuro, ver sección 10) |
+**Vista `v_liquidacion_comunidad_fecha`** — agrupa `salida_servicios` activos por comunidad
+y fecha, con cliente, rubro, cantidad, unitario, descuento, monto y método de pago. Es la
+que alimenta el botón de liquidar y el export.
 
-### 3.3 Módulos y rutas
+**Consecuencias que hay que asumir, y son buenas**
 
-| Módulo | Usuario | Rutas / piezas |
+- El Excel exportado **sirve para cotejar de verdad**, porque trae lo que pasó, no lo que
+  se vendió.
+- Se puede **importar el Excel corregido** y actualizar `cantidad`, `unitario`, descuentos y
+  método de pago por `id`.
+- Las vistas `v_liquidacion_*` existentes se reapuntan a `salida_servicios` cuando la
+  reserva ya tiene servicios generados, y siguen derivando del catálogo cuando no (reservas
+  históricas). Sin esto, las liquidaciones viejas se romperían.
+- Cada cambio deja rastro: `origen`, `motivo_cambio`, `creado_por`, `updated_at`.
+
+---
+
+## 4. El portal de la comunidad — y el cambio de política
+
+El cliente quiere que **cada comunidad entre con su propio usuario y vea sólo lo suyo**.
+Eso **contradice una regla que ya está implementada**.
+
+`supabase/migrations/13_todos_leen.sql` dice, textual:
+
+> «Regla de la cooperativa: la información es de todos. Cualquier usuario con sesión LEE
+> toda la operación (reservas, pagos, gastos, liquidación, calendario).»
+
+Y abre `reservas` a `for select to authenticated using (true)` — **incluido el precio de
+venta y los datos de contacto del cliente**. También abre `pagos`.
+
+**Qué hay que hacer (migración `22_comunidad_ve_lo_suyo.sql`)**
+
+1. Restringir la lectura de `reservas` y `pagos` para el rol `comunidad`.
+2. Como **RLS filtra renglones, no columnas**, esconder el precio de venta requiere una
+   **vista** `v_comunidad_llegadas` con sólo las columnas permitidas (fecha, nombre del
+   cliente, personas, idioma, guía), y quitarle al rol el `select` directo sobre `reservas`.
+3. Vistas nuevas del portal:
+   - `v_comunidad_llegadas` — próximas llegadas con lo que hay que preparar.
+   - `v_comunidad_ingresos_mes` — suma de `salida_servicios.monto` por `rubro` y mes.
+   - `v_comunidad_liquidaciones` — qué se pagó, qué falta, con comprobante.
+   Todas filtradas por `usuarios_comunidad.comunidad_id = auth.uid()`.
+4. `usuarios_comunidad` ya existe en el esquema; se le da de alta un usuario por pueblo.
+
+> **Esto es una decisión de la cooperativa, no técnica.** Hay que acordarla en la reunión de
+> arranque: o la información sigue siendo de todos, o cada pueblo ve sólo lo propio. No se
+> puede tener las dos. Está señalada en la diapositiva 6.
+
+---
+
+## 5. Los demás módulos
+
+Lo que dice *(existe)* ya está construido y en producción.
+
+### Arranque en producción · 6 h
+Aplicar `20_enum_apartado.sql` y `21_plan_producto.sql` en producción, en ese orden ·
+`CRON_SECRET` y verificación del cron · carga del CSV de precios · tres reservas de humo.
+
+### Catálogo con costos reales · 10 h
+`paquetes` → `itinerario_dias` → `itinerario_items` con `tipo`, `comunidad_id`, `monto` y
+`por_persona`, más `comedores`, `servicios` y `paquete_comunidades` *(existe)*.
+**Trabajo:** cargar los costos reales de las 33 salidas, auditar que no queden ítems
+liquidables en `monto = 0` sin motivo, UI para editar tarifa y comunidad por ítem, y ampliar
+la plantilla CSV para que incluya costos y no sólo precios de venta.
+
+### Aviso a la comunidad por WhatsApp automático · 20 h + 16 h de automatización
+```
+ordenes_servicio (id, reserva_id, comunidad_id, dia, fecha, token,
+                  enviada_el, recibida_el, cerrada_el, notas_comunidad)
+```
+Los renglones de la orden **son `salida_servicios`** — no se duplica la información.
+El `token` es aleatorio y de un solo uso por orden: la comunidad abre `/orden/<token>` sin
+cuenta ni contraseña y sólo ve esa orden.
+**Trabajo:** generación al confirmar el anticipo · página móvil con «recibido» y «ya se
+prestó» · corrección de cantidades reales · enlace `wa.me` con el mensaje pre-armado ·
+versión imprimible · bandeja de despacho con el estado de cada orden.
+**En el alcance base (16 h):** WhatsApp Cloud API con plantillas aprobadas, envío automático
+al confirmarse el anticipo, recordatorio 3 días antes, aviso de cambios, insistencia si no
+hay acuse y bitácora de envíos. Requiere número a nombre de la cooperativa y trámite de
+aprobación de plantillas ante Meta — **se inicia la semana 1**. Costo por mensaje aparte.
+
+### Botón de liquidar por comunidad y fecha · 24 h
+Selector de comunidad + rango de fechas → `v_liquidacion_comunidad_fecha`.
+**Trabajo:** la pantalla con filtros y totales (7) · descuento por renglón, por porcentaje o
+monto, con motivo (4) · método de pago por renglón o en bloque (3) · **export .xlsx con la
+forma de su hoja actual** (5) · **importación del Excel corregido** (5).
+Estados: `por validar → lista para captura → pagada`, con comprobante adjunto.
+
+### Motor de reservas y disponibilidad · 18 h
+```
+unidades_hospedaje  (id, comunidad_id, nombre, tipo, capacidad, activa)
+paquete_hospedaje   (paquete_id, dia, comunidad_id, unidades_requeridas)
+ocupacion_hospedaje (unidad_id, fecha, reserva_id, personas)  -- unique(unidad_id, fecha)
+bloqueos_fecha      (comunidad_id | paquete_id, fecha_ini, fecha_fin, motivo, creado_por)
+```
+**RPC `disponibilidad(paquete_id, fecha, personas)`** — cupo de la salida, unidades libres
+por día y bloqueos vigentes. La reserva web y el dashboard llaman a la **misma** función, y
+`apartar_reserva` la invoca dentro de la transacción para que dos reservas simultáneas no
+tomen la misma cama. El cupo por salida y el apartado de 72 h con cron ya existen *(existe)*.
+
+### Cobro en línea: anticipo y pago diferido · 22 h
+
+**Punto de partida real:** hoy se cobra con un enlace de PayPal — todo o nada, y con
+comisión alta. Sobre una venta de $12,000 MXN, referencia a julio 2026:
+**PayPal ~$550 · tarjeta ~$435 · SPEI ~$12**. Cobrar el anticipo con tarjeta y el saldo por
+transferencia baja el costo de ~$550 a menos de $100 por venta. Tarifas a confirmar al
+contratar.
+```
+plan_pago  (id, reserva_id, concepto, monto, vence_el, metodo_sugerido, status)
+pagos      + plan_pago_id, pasarela, pasarela_ref, pasarela_fee
+```
+`pagos` ya admite varias filas por reserva, `v_reservas_saldo` ya calcula pagado y saldo, y
+el disparador que confirma la reserva al validar un depósito ya existe *(existe)*.
+**Trabajo:** `vercel integration add stripe` · Checkout del anticipo · webhook idempotente ·
+plan de cuotas al reservar · enlace de pago del saldo · recordatorio antes del vencimiento.
+
+**Pasarela.** Stripe es la recomendación: única integración nativa de pagos en la
+infraestructura que ya se usa, y en México cubre tarjeta nacional e internacional, SPEI,
+OXXO y meses sin intereses en un solo lugar. El campo `pasarela` deja abierta la puerta a
+Mercado Pago, Openpay o Conekta. **Tarifas a confirmar al contratar** — cobrar el anticipo
+con tarjeta y el saldo por SPEI baja la comisión de ~$435 a ~$96 en una venta de $12,000.
+
+### Registro y conciliación de pagos · 12 h
+```
+movimientos_banco (id, fecha, monto, referencia, descripcion, origen, pago_id, status)
+pagos + etapa_conciliacion  -- sin_identificar | identificado | facturado | cerrado
+```
+**Trabajo:** tablero de cuatro columnas (sustituye Trello) · importación del estado de cuenta
+en CSV con sugerencia de coincidencia por monto, fecha y referencia, aprobada por una
+persona · comprobante adjunto por pago.
+
+### Ventas: idioma, guía bilingüe y filtros · 9 h
+`guias` ya tiene `bilingue` e `idiomas`; `reservas` ya tiene `nacionalidad`; `paquetes` ya
+tiene los datos del anfitrión *(existe)*.
+**Trabajo:** `reservas.idioma_tour` y `tipo_tour` · asignación de guía por salida con
+**alerta si un grupo en inglés no tiene guía bilingüe** · el idioma impreso en la orden de
+servicio · filtros y columnas equivalentes a Monday (`estado_admin`, agente, tipo de tour).
+
+### Datos fiscales del cliente y cola de facturación · 12 h
+```
+reservas + requiere_factura, razon_social, rfc, regimen_fiscal,
+           cp_fiscal, uso_cfdi, email_factura, pais, pasaporte
+```
+`pagos` ya guarda `con_factura`, `folio_factura`, `subtotal` e `iva`, y
+`15_contabilidad.sql` ya cruza facturas de venta contra facturas de proveedor *(existe)*.
+**Trabajo:** campos fiscales en el formulario público y en el dashboard · validación de RFC
+y del genérico `XEXX010101000` · cola de «por facturar» con el monto cuadrado contra pagos
+confirmados · export contable del periodo.
+
+### Panel fiscal de las 8 comunidades · 18 h
+```
+comunidades + rfc, regimen_fiscal, cp_fiscal, gestion_fiscal (boolean)
+obligaciones_fiscales (id, comunidad_id, periodo, tipo, base, impuesto,
+                       retenciones, fecha_limite, status, comprobante_url)
+comprobantes (id, comunidad_id, tipo, uuid, folio, fecha,
+              subtotal, iva, xml_url, pdf_url, gasto_id)
+```
+Vistas: `v_fiscal_comunidad_mes` (facturado, gastos con comprobante, IVA trasladado, IVA
+acreditable, retenciones, neto del periodo) y `v_obligaciones_proximas`. `gastos` ya trae
+`comunidad_id`, `iva`, `folio` y `con_factura` *(existe)*.
+
+> **Dos límites explícitos.** (1) La plataforma **lleva el control y prepara la
+> determinación**; quien valida y firma es el contador de la cooperativa. (2) El catálogo
+> tiene **10 comunidades** y la cooperativa administra el impuesto de **8**: la bandera
+> `gestion_fiscal` marca cuáles entran. **Cuáles son las ocho es un punto abierto** que se
+> confirma en el arranque.
+
+---
+
+## 6. Horas de la etapa 1
+
+| # | Fase | h |
+|:---:|---|---:|
+| — | Ya invertido y en producción | 20 |
+| A | Arranque en producción | 6 |
+| B | Catálogo con costos reales | 10 |
+| C | Servicios reales de la salida (`salida_servicios`) | 14 |
+| D | Orden de servicio y acuse del pueblo | 20 |
+| **D2** | **WhatsApp automático (Cloud API, plantillas, recordatorios)** | **16** |
+| E | Botón de liquidar + descuentos + export/import Excel | 24 |
+| F | Portal de la comunidad + ingresos por rubro + cambio de RLS | 18 |
+| G | Motor de reservas y disponibilidad compartida | 18 |
+| **G2** | **Sitio de Pueblos Mancomunados + identidad por pueblo + dominios** | **14** |
+| H | Cobro en línea: anticipo 20 % y pago diferido | 22 |
+| I | Registro y conciliación de pagos | 12 |
+| J | Ventas: idioma, guía bilingüe, filtros | 9 |
+| K | Datos fiscales del cliente y cola de facturación | 12 |
+| L | Sitio: enlaces y llamados a la acción | 2 |
+| M | Migración de Monday, manual y estabilización | 12 |
+| N | Capacitaciones (4) y reuniones de seguimiento | 12 |
+| O | Pruebas finales de regresión y acta | 4 |
+| **P** | **Panel fiscal de las 8 comunidades** | **18** |
+| **Q** | **Histórico, KPIs y reportes con gráficas** | **10** |
+| **R** | **Agente de WhatsApp que atiende y aparta** | **36** |
+| **S** | **Copy y fotos de los micrositios** | **6** |
+| **K2** | **Timbrado CFDI 4.0 vía PAC** | **14** |
+| | **Total del paquete** | **329** |
+
+Pendiente: **309 h** en 13 semanas = **~24 h/semana**.
+
+---
+
+## 7. Cronograma y pagos
+
+| Mes | Semanas | h | Fases | Entrega en producción |
+|---|---|---:|---|---|
+| **Mes 1** | 1–5 · 17 ago – 20 sep | 119 | A, B, C, D, D2, E, F, parte de G | **WhatsApp automático al pueblo** y **el botón de liquidar** con su Excel |
+| **Mes 2** | 6–9 · 21 sep – 18 oct | 95 | resto de G, G2, H, I, J, S, Q, parte de R | **Las diez páginas ligadas**, el acceso de cada comunidad y el cobro en línea |
+| **Mes 3** | 10–13 · 19 oct – 15 nov | 95 | resto de R, K, K2, P, L, M, N, O | Agente de WhatsApp, factura timbrada, **panel fiscal** y **acta firmada** |
+| | **13 semanas** | **309** | | |
+
+### Pagos
+
+| # | Fecha | Contra qué | MXN |
+|:---:|---|---|---:|
+| Anticipo | **lun 17 ago 2026** | Al firmar. Incluye las 20 h ya invertidas y la puesta en marcha | **$10,000** |
+| 1 | dom 20 sep 2026 | WhatsApp automático al pueblo, con acuse, y el botón de liquidar con su Excel | **$10,000** |
+| 2 | dom 18 oct 2026 | Las diez páginas ligadas al mismo calendario y el acceso propio de cada comunidad | **$10,000** |
+| 3 | dom 15 nov 2026 | Agente de WhatsApp, factura timbrada, panel fiscal, capacitaciones y acta | **$10,000** |
+| | | **Total** | **$40,000** |
+
+**Alternativa:** $20,000 al firmar y $20,000 el 18 de octubre. Mismo precio y alcance.
+
+### Reuniones incluidas (12 h)
+
+| Fecha | Evento | Duración |
+|---|---|---:|
+| lun 17 ago 2026 | Arranque y firma | 1 h |
+| **mié 19 ago 2026** | **Taller de precios y costos** — el más importante | 2 h |
+| cada dos semanas | Seguimiento con la persona que decide | 1 h |
+| sep 2026 | Validación de una quincena real contra su Excel | 1 h |
+| oct 2026 | Cuatro capacitaciones: ventas, finanzas y contabilidad, comunidades, dirección | 2 h c/u |
+
+Si el ritmo de ~24 h/semana resulta insostenible, se puede bajar a ~17 h/semana y cerrar a
+más tardar el 27 de diciembre: son las mismas 309 horas en 18 semanas. El precio y el alcance
+no cambian.
+
+---
+
+## 8. Roles y permisos (después de la migración 22)
+
+| Rol | Lee | Escribe |
 |---|---|---|
-| Sitio ES | Público | `/`, `/experiencias/[id]`, `/pueblos/[id]`, `/region`, `/proyecto`, `/equipo` |
-| Sitio EN | Público | `/en/*` (equivalente) |
-| Reserva web | Público | `ReservaForm`, `acciones-web.ts` → RPC |
-| Ventas | ventas, admin | `/ventas` — Panel, Clientes, Paquetes, Tabla, Leads, Transportes |
-| Liquidación | finanzas, admin | `/liquidacion` — por venta, salida, comunidad |
-| Banca | finanzas, admin | `/banca` — pagos, resumen, contabilidad |
-| Calendario | varios | `/calendario` |
-| Comunidades | comunidad, admin | `/comunidades/[id]` checklist |
-| Admin | admin | `/admin` — usuarios, import CSV precios |
+| **admin** | todo | todo, y es el único que administra usuarios |
+| **ventas** | toda la operación | reservas, paquetes, itinerarios, ajustes de servicios, despacho |
+| **finanzas** | toda la operación | pagos, conciliación, gastos, descuentos, liquidaciones |
+| **contabilidad** | toda la operación | facturación, registro de CFDI |
+| **comunidad** | **sólo lo de su pueblo** — llegadas, itinerario, servicios, ingresos, liquidaciones | acuse de sus órdenes, cantidades reales, gastos de su pueblo |
+| **comunidad sin cuenta** | sólo la orden que se le envió, por token | «recibido» y «ya se prestó» |
 
-### 3.4 Roles y permisos (RLS)
-
-| Rol | Ve | Escribe |
-|---|---|---|
-| **admin** | Todo | Todo |
-| **ventas** | Pipeline, leads, transportes, catálogo | Reservas, paquetes, leads |
-| **finanzas** | Banca, liquidación, cobros | Pagos, flags liquidación |
-| **comunidad** | Operación y liquidación de **su** pueblo | Checklist, gastos locales |
+`lib/permisos.ts` decide qué se **muestra**; el RLS de Postgres decide qué se **permite**, y
+ése es el que manda. Las columnas que la comunidad no debe ver (precio de venta, datos
+bancarios) se esconden con **vistas**, no con RLS.
 
 ---
 
-## 4. Cómo funciona la plataforma (flujos visuales)
-
-### 4.1 Apartado 72 horas (turista → ventas)
-
-```mermaid
-sequenceDiagram
-  participant T as Turista
-  participant Web as Sitio Next.js
-  participant DB as Supabase Postgres
-  participant Cron as Cron Vercel
-  participant V as Equipo ventas
-
-  T->>Web: Elige paquete y datos
-  Web->>DB: RPC apartar_reserva
-  alt Hay cupo
-    DB-->>Web: Reserva status Apartado + vencimiento 72h
-    Web-->>T: Confirmación + plazo pago
-  else Sin cupo
-    DB-->>Web: Error cupo
-    Web-->>T: No disponible
-  end
-  Cron->>DB: Cada hora liberar vencidos
-  V->>Web: Registra pago / confirma
-  Web->>DB: pagos + status Confirmado
-```
-
-### 4.2 Liquidación derivada (sin reescribir Excel)
-
-```mermaid
-flowchart LR
-  subgraph entradas [Datos base]
-    P[Paquete + itinerario]
-    C[Comedores y costos unitarios]
-    R[Reserva pax reales]
-  end
-  subgraph motor [Motor SQL]
-    V1[v_liquidacion_conceptos]
-    V2[v_liquidacion_por_venta]
-    V3[v_liquidacion_programada]
-  end
-  subgraph salidas [Dashboard]
-    UI1[Liquidacion por venta]
-    UI2[Por salida / comunidad]
-    UI3[Quincena export Excel pendiente]
-  end
-  P --> V1
-  C --> V1
-  R --> V1
-  V1 --> V2
-  V1 --> V3
-  V2 --> UI1
-  V3 --> UI2
-  V2 --> UI3
-```
-
-**Idea clave:** cuando finanzas actualiza un costo en el catálogo, la próxima consulta recalcula; no hay fórmulas rotas en Google Sheets.
-
-### 4.3 Banca — reemplazo de Trello (objetivo Fase F)
-
-```mermaid
-flowchart LR
-  subgraph hoy [Hoy Trello]
-    L1[BBVA PayPal sin identificar]
-    L2[WeTravel]
-    L3[Identificado con factura]
-    L4[Identificado sin factura]
-  end
-  subgraph plataforma [Plataforma ESN]
-    K1[Kanban v_banca_pagos]
-    K2[Asociar pago a reserva]
-    K3[requiere_factura]
-    K4[facturarPago existente]
-  end
-  L1 --> K1
-  L2 --> K1
-  L3 --> K3
-  L4 --> K3
-  K1 --> K2
-  K2 --> K4
-```
-
-Depósito confirmado en Banca puede disparar (ya en BD) paso de **Apartado** → **Confirmado** vía trigger en pagos.
-
-### 4.4 Micrositio → misma operación
-
-```mermaid
-flowchart LR
-  M[Micrositio pueblo X] -->|experiencia ?pueblo=X| F[Formulario reserva]
-  F -->|origen_comunidad_id| R[(reserva)]
-  G[Landing global] --> F
-  R --> V[Ventas filtro por comunidad]
-  R --> L[Liquidacion por pueblo]
-```
-
----
-
-## 5. Reemplazo Monday + Trello + Excel
-
-### 5.1 Monday → módulos
-
-| Tablero Monday | Plataforma | Estado |
-|---|---|---|
-| Leads | Ventas → Leads + form micrositio | Hecho (base) |
-| Ventas ganadas | Ventas → Panel + Tabla | ~80 % — faltan columnas |
-| Histórico | Ventas → Histórico + KPIs | Pendiente Fase J |
-| Liquidaciones | Liquidación + «listo captura» | Pendiente Fase G |
-| Ventas perdidas | Leads perdido + motivo | Hecho (base) |
-| Cobros comunidad | Liquidación + reporte mes | Pendiente Fase G |
-| Expediente | Reserva → Expediente Storage | Hecho (base) |
-| Transportes | Ventas → Transportes | Hecho (vista) |
-
-**Columnas Monday aún pendientes en `reservas` (Fase D):**
-
-| Monday | Campo propuesto |
-|---|---|
-| Idioma tour ES/EN | `idioma_tour` |
-| Privado / Abierto | `tipo_tour` |
-| Anfitrión por salida | `anfitrion_nombre` o FK guía |
-| Nueva venta / Liquidar | `estado_admin` |
-
-### 5.2 Trello → Banca (Fase F)
-
-| Lista Trello | En plataforma |
-|---|---|
-| Sin identificar | Kanban columna 1 |
-| Identificado + factura | Columna 3 + `requiere_factura` |
-| Identificado sin factura | Columna 2 |
-| Cerrado | Columna 4 |
-
-### 5.3 Excel quincenal → Liquidación (Fase H)
-
-| Excel | Plataforma |
-|---|---|
-| Hoja por comunidad + fechas | Pantalla Quincena (filtros) |
-| Efvo vs Fact | Filtros `metodo_pago` / factura |
-| servicio × unitario × cantidad | Vista derivada + export `.xlsx` |
-| Validación Amatlán | Comparación 1 quincena piloto |
-
----
-
-## 6. Qué ya está hecho (~20 h)
+## 9. Qué ya está construido (20 h, en producción)
 
 | Entregable | Estado |
 |---|---|
-| Migraciones 20–21 en repo (`20_enum_apartado`, `21_plan_producto`) | Falta aplicar en **producción** |
-| Sitio bilingüe, 33 paquetes, SEO, favicon | En producción |
-| 10 micrositios plantilla ES/EN | En producción — falta copy/fotos |
-| Apartado + cron `/api/cron/liberar-apartados` | En producción |
-| Tabla ventas, leads, transportes, expediente, import precios | En producción |
-| Liquidación / Banca / Calendario / Comunidades | Base en producción |
+| Sitio bilingüe ES/EN, 32 experiencias activas, SEO, sitemap | producción |
+| Micrositio por pueblo (10 cargados) con formulario propio | producción — **arreglado el acceso público**; falta contenido propio de cada pueblo |
+| Apartado 72 h + cron `/api/cron/liberar-apartados` | producción |
+| Cupo por salida (`paquetes.cupo_personas_salida`) | producción |
+| Ventas: reservas, prospectos, transportes, expediente con adjuntos | producción |
+| Liquidación derivada (`v_liquidacion_conceptos`, `_por_venta`, `_programada`) | producción — se reapunta a `salida_servicios` en la fase C |
+| Banca: pagos con comprobante, pago dividido, registro de CFDI de venta | producción |
+| Contabilidad: gastos con/sin factura, IVA, balance del periodo | producción |
+| Calendario de salidas, checklist por comunidad, roles y RLS | producción |
+| Importación masiva de precios por CSV | producción |
+| Migraciones `20_enum_apartado.sql` y `21_plan_producto.sql` | **en repo, falta aplicar en prod** |
 
 ---
 
-## 7. Plan de trabajo pendiente (tareas y horas)
+## 10. Reemplazo de las herramientas actuales
 
-| Fase | Nombre | h dev | h acomp. | Entregable |
-|:---:|---|---:|---:|---|
-| **A** | Puesta en marcha prod | 5 | 2 | DB prod, precios, 3 reservas piloto |
-| **B** | Sitio y micrositios | 6 | 0 | CTAs, carga descripciones pueblos |
-| **C** | Apartado pulido | 5 | 0 | Alertas dashboard, email opcional |
-| **D** | Ventas ≈ Monday | 10 | 0 | idioma, tipo, anfitrión, filtros, estado_admin |
-| **E** | Leads | 1.5 | 0 | Motivo perdida, filtros |
-| **F** | Banca ≈ Trello | 11 | 0 | Kanban, factura, CSV banco |
-| **G** | Liquidación ops | 6 | 0 | Listo captura, cobros comunidad/mes |
-| **H** | Quincena Excel | 12 | 0 | UI + export + validación Amatlán |
-| **I** | Transportes / expediente | 2.5 | 0 | Permisos Storage, UX |
-| **J** | Histórico y gráficas | 10 | 0 | Año, KPIs, ventas/mes, calendario filtros |
-| **K** | Go-live | 12 | 10 | Import Monday, manual PDF, bugs, 3 capacitaciones, reuniones |
-| **L** | Cierre QA | 3 | 0 | Regresión + acta |
-| | **Total** | **84** | **12** | **96 h** |
-
-### Detalle por fase
-
-**A — Puesta en marcha (5 + 2 h)**  
-A1 Migraciones 20–21 prod + smoke (1.5) · A2 Cron `CRON_SECRET` (0.5) · A3 CSV precios/costos + 3 reservas piloto (1.5) · A4 Checklist precios con finanzas (1.5) · A5 Taller precios reunión (2)
-
-**B — Sitio (6 h)**  
-B1 Limpieza `public/` legacy + CTAs (2) · B2 Carga `descripcion` / `descripcion_en` (2) · B3 Enlaces global ↔ pueblos (2)
-
-**C — Apartado (5 h)**  
-C1 Badge apartados por vencer (2) · C2 Email Resend opcional (3)
-
-**D — Ventas Monday (10 h)**  
-D1 Campos BD + UI idioma/tipo/anfitrión (4) · D2 Filtros + CSV (3) · D3 `estado_admin` (3)
-
-**E — Leads (1.5 h)**  
-E1 Perdidas y filtros (1.5)
-
-**F — Banca (11 h)**  
-F1 Kanban (6) · F2 `requiere_factura` (1.5) · F3 Import CSV movimientos (3.5)
-
-**G — Liquidación (6 h)**  
-G1 Listo para captura (3) · G2 UI cobros comunidad/mes (3)
-
-**H — Quincena (12 h)**  
-H1 Pantalla rango + comunidad (6) · H2 Export xlsx (4) · H3 Validación vs Excel referencia (2)
-
-**I — (2.5 h)** · **J — (10 h)** · **K — (12 + 10 h)** · **L — (3 h)**
-
----
-
-## 8. Cronograma con fechas exactas
-
-**Ritmo:** 12 horas de trabajo por semana (lunes a domingo).  
-**Kickoff:** **3 ago 2026 (lun)** · **Acta go-live:** **27 sep 2026 (dom)**
-
-### 8.1 Diagrama de Gantt
-
-```mermaid
-gantt
-    title Cronograma ESN — 3 ago al 27 sep 2026
-    dateFormat YYYY-MM-DD
-    axisFormat %d %b
-
-    section Hitos de cobro
-    H1 Anticipo USD 288           :milestone, m1, 2026-08-03, 0d
-    H2 Fundacion web USD 195        :milestone, m2, 2026-08-16, 0d
-    H3 Ventas Monday USD 255        :milestone, m3, 2026-08-30, 0d
-    H4 Banca liquidacion USD 255    :milestone, m4, 2026-09-13, 0d
-    H5 Quincena Excel USD 225       :milestone, m5, 2026-09-20, 0d
-    H6 Go-live acta USD 222         :milestone, m6, 2026-09-27, 0d
-
-    section Semana 1 3-9 ago
-    Fase A prod precios piloto      :a1, 2026-08-03, 7d
-    Fase B sitio inicio             :b1, 2026-08-06, 4d
-
-    section Semana 2 10-16 ago
-    Fase B micrositios cierre       :b2, 2026-08-10, 7d
-    Fase C apartado                 :c1, 2026-08-14, 3d
-
-    section Semana 3 17-23 ago
-    Fase D ventas Monday            :d1, 2026-08-17, 7d
-
-    section Semana 4 24-30 ago
-    Fase D E cierre                 :d2, 2026-08-24, 4d
-    Fase F banca inicio             :f1, 2026-08-27, 4d
-
-    section Semana 5 31 ago-6 sep
-    Fase F kanban                   :f2, 2026-08-31, 7d
-
-    section Semana 6 7-13 sep
-    Fase G liquidacion              :g1, 2026-09-07, 7d
-
-    section Semana 7 14-20 sep
-    Fase H quincena Excel           :h1, 2026-09-14, 7d
-    Fase I transportes              :i1, 2026-09-18, 3d
-
-    section Semana 8 21-27 sep
-    Fase J historico graficas       :j1, 2026-09-21, 4d
-    Fase K import manual bugs       :k1, 2026-09-21, 7d
-    Capacitaciones x3               :k2, 2026-09-23, 3d
-    Fase L QA acta                  :l1, 2026-09-25, 3d
-```
-
-### 8.2 Calendario semanal (fechas y foco)
-
-| Semana | Del | Al | Horas | Fases | Entregable demo |
-|:---:|---|---|---:|---|---|
-| 1 | **lun 3 ago 2026** | dom 9 ago | 12 | A, B | Prod con migraciones; precios piloto |
-| 2 | lun 10 ago | dom 16 ago | 12 | B, C | CTAs + alertas apartado; **Hito 2** |
-| 3 | lun 17 ago | dom 23 ago | 12 | D | Columnas Monday en reserva |
-| 4 | lun 24 ago | dom 30 ago | 12 | D, E, F | Tabla filtros; kanban inicio; **Hito 3** |
-| 5 | lun 31 ago | dom 6 sep | 12 | F | Trello en pantalla |
-| 6 | lun 7 sep | dom 13 sep | 12 | G | Listo captura + cobros comunidad; **Hito 4** |
-| 7 | lun 14 sep | dom 20 sep | 12 | H, I | Quincena export; **Hito 5** |
-| 8 | lun 21 sep | **dom 27 sep** | 12 | J, K, L | Histórico, import Monday, acta; **Hito 6** |
-
-### 8.3 Reuniones y capacitaciones (fechas propuestas)
-
-| Fecha | Evento | Duración |
+| Tablero Monday | Plataforma | Estado |
 |---|---|---|
-| **lun 3 ago 2026** | Kickoff + firma anticipo | 1 h |
-| **mié 6 ago 2026** | Taller precios (Fase A5) | 2 h |
-| **mié 17 sep 2026** | Reunión validación quincena vs Excel | 1 h |
-| **mar 23 sep 2026** | Capacitación ventas | 2 h |
-| **jue 25 sep 2026** | Capacitación finanzas | 2 h |
-| **vie 26 sep 2026** | Capacitación comunidades | 2 h |
-| **dom 27 sep 2026** | Acta de aceptación go-live | 1 h |
+| Leads | Ventas → Prospectos | hecho |
+| Ventas ganadas | Ventas → Panel y Tabla | ~80 %, faltan columnas (fase J) |
+| Histórico | Ventas → Histórico y KPIs | fase Q |
+| Liquidaciones | Botón de liquidar + estados | fase E |
+| Cobros comunidad | Portal de la comunidad | fase F |
+| Expediente | Reserva → Expediente en Storage | hecho |
+| Transportes | Ventas → Transportes | hecho |
 
-Reuniones de seguimiento quincenales: **13 ago**, **27 ago**, **10 sep**, **24 sep 2026** (1 h c/u, incluidas en acompañamiento).
+| Lista Trello | Columna |
+|---|---|
+| Sin identificar | 1 · sin_identificar |
+| Identificado sin factura | 2 · identificado |
+| Identificado con factura | 3 · facturado |
+| Cerrado | 4 · cerrado |
 
-### 8.4 Línea de tiempo de cobros
+| Excel de la quincena | Plataforma |
+|---|---|
+| Hoja por comunidad con fechas | Botón de liquidar: comunidad + rango |
+| servicio × unitario × cantidad | `v_liquidacion_comunidad_fecha` |
+| Descuentos y método de pago anotados a mano | Columnas del propio renglón |
+| Cotejo manual | Export `.xlsx` con la misma forma, e importación de correcciones |
 
-```mermaid
-timeline
-    title Hitos de pago (USD 1,440 pendiente)
-    3 ago 2026 : Anticipo 288
-    16 ago 2026 : Fundacion + web 195
-    30 ago 2026 : Ventas Monday 255
-    13 sep 2026 : Banca + liquidacion 255
-    20 sep 2026 : Quincena Excel 225
-    27 sep 2026 : Go-live 222
-```
-
----
-
-## 9. Precios, hitos y forma de pago
-
-**Tarifa:** USD **15.00 / hora** (IVA/retención MX según régimen, por acordar).
-
-| # | Hito | Fecha límite | Horas | USD | Condición |
-|:---:|---|---|---:|---:|---|
-| 1 | Anticipo (20 %) | 3 ago 2026 | 19 | **288** | Firma + acceso Supabase prod |
-| 2 | Fundación + web | 16 ago 2026 | 13 | **195** | Migraciones OK + CTAs |
-| 3 | Ventas Monday | 30 ago 2026 | 17 | **255** | Demo columnas y filtros |
-| 4 | Banca + liquidación | 13 sep 2026 | 17 | **255** | Kanban conciliación usable |
-| 5 | Quincena Excel | 20 sep 2026 | 15 | **225** | 1 quincena validada |
-| 6 | Go-live | 27 sep 2026 | 15 | **222** | Acta firmada |
-| | **Total pendiente** | | **96** | **1,440** | |
-
-**Sugerencia:** transferencia internacional o SPEI en MXN a tipo de cambio del día; **15 días** netos por hito.
-
-**Retainer post go-live (opcional):**
-
-| Nivel | h/mes | USD/mes |
-|---|---:|---:|
-| Soporte estándar | 6 | 90 |
-| Temporada alta | 8 | 120 |
-
-**Fuera de alcance (nuevo contrato):** API BBVA, webhooks WeTravel/PayPal, CFDI, app móvil, multi-cooperativa.
+**Migración (fase M):** nombre, estado, agente, pax, nacionalidad, paquete, idioma, fechas y
+archivos de itinerario a `reservas` / `reserva_adjuntos`; leads y perdidas a `leads`; cobros
+en comunidad a `pagos`. Las liquidaciones históricas quedan como referencia.
 
 ---
 
-## 10. Costos mensuales de la plataforma (OPEX)
+## 11. Responsabilidades
 
-La app **no consume IA** en producción hoy.
-
-### 10.1 Operación recomendada (temporada)
-
-| Servicio | Plan | USD/mes | Notas |
-|---|---|---:|---|
-| Vercel | Pro | 20 | Cron apartados, ancho de banda, previews |
-| Supabase | Pro | 25 | Backups, Storage expedientes, sin pausa |
-| Dominio | anual prorrateado | 1–2 | .com / .mx |
-| Resend (opcional) | Free–Starter | 0–20 | Emails apartado |
-| **Total típico** | | **46–67** | |
-
-### 10.2 Escenario mínimo
-
-Vercel Hobby + Supabase Free ≈ **USD 1/mes** — riesgo: límites de cron, DB y Storage.
-
-### 10.3 Comparativa herramientas actuales vs plataforma
-
-```mermaid
-xychart-beta
-    title "Costo mensual aproximado (USD)"
-    x-axis ["Monday", "Trello", "Plataforma ESN min", "Plataforma ESN prod"]
-    y-axis "USD" 0 --> 120
-    bar [80, 10, 1, 55]
-```
-
-*(Monday: rango 40–120 según asientos; barra 80 es referencia media.)*
-
-### 10.4 IA opcional (futuro, no incluida en desarrollo)
-
-| Uso | Costo orientativo USD/mes |
-|---|---:|
-| Borradores textos EN micrositios | 5–25 |
-| Asistente interno sobre manual | 15–40 |
-| **Recomendación** | Postergar hasta después del 27 sep 2026 |
+| Responsabilidad | Quién |
+|---|---|
+| Precios y costos reales de comidas, senderos, hospedajes, talleres, transportes, anfitriones | ESN / finanzas |
+| **Decisión: ¿la información es de todos, o cada pueblo ve sólo lo suyo?** | ESN dirección |
+| Persona que decide y aprueba entregas (1 h cada dos semanas) | ESN dirección |
+| Cuáles son las 8 comunidades y el contacto de WhatsApp de cada una | ESN |
+| Una quincena ya cerrada en Excel, para comparar | ESN administración |
+| Cuenta de cobro en línea a nombre de la cooperativa (trámite lento — semana 1) | ESN |
+| Accesos a Supabase producción | ESN |
+| Export de Monday y fecha de corte de captura | ESN administración |
+| **Logos** de Sierra Norte, de Pueblos Mancomunados y de cada uno de los 8 pueblos | ESN |
+| **Fotos, video y texto propios de los 8 pueblos** para sus páginas | ESN marketing |
+| **Número de WhatsApp** de cada comunidad y uno de la cooperativa para los envíos | ESN |
+| Capturas del dashboard interno para la presentación | ESN / desarrollo |
+| Validación y firma de la determinación fiscal | Contador de ESN |
+| Desarrollo, pruebas, despliegue, migración, manual y capacitaciones | Desarrollo |
 
 ---
 
-## 11. Checklist — validación precios y liquidación (Fase A)
+## 12. Riesgos
 
-Usar después de cargar tarifas y costos en catálogo.
+| Riesgo | Mitigación |
+|---|---|
+| **El plazo de 3 meses es muy apretado** | ~24 h/semana no deja ninguna holgura. Si algo se atora, se recorre a 18 semanas cerrando a más tardar el 27 de diciembre, con el mismo precio. **Está en la cláusula 6 del acuerdo** |
+| **Las plantillas de WhatsApp no se aprueban a tiempo** | El trámite ante Meta se inicia la semana 1. Mientras tanto, el aviso sale con un clic desde el WhatsApp normal — el pueblo recibe lo mismo |
+| Las tarifas tardan | La primera mensualidad no se cobra sin costos cargados — la alerta llega en agosto, no al final |
+| Las comunidades no adoptan el enlace | **Dos pueblos piloto** antes de abrirlo a los ocho; la orden se sigue pudiendo imprimir |
+| No se decide qué ve cada comunidad | Bloquea la fase F. Es el primer punto de la reunión de arranque |
+| La cuenta de la pasarela se atrasa | El trámite se inicia en la semana 1; el cobro en línea es de septiembre, y el margen es corto |
+| Finanzas sigue con el Excel en paralelo | Se corren ambos una quincena y se comparan; fecha de corte acordada por escrito |
+| La liquidación no cuadra con su número | Validación contra una quincena real; el desglose visible revela la tarifa mal capturada en minutos |
+| Las liquidaciones históricas se rompen al meter `salida_servicios` | Las vistas caen al catálogo cuando la reserva no tiene servicios generados |
+| Temporada alta encima del proyecto | A ~24 h/semana no hay margen. Si hay que pausar, el calendario se recorre a 18 semanas; las horas no se pierden y el precio no cambia |
+| Requerimientos nuevos | Se cotizan aparte con horas visibles, a la misma tarifa, con aprobación previa |
+
+---
+
+## 13. Cómo sabemos que quedó — 15 de noviembre de 2026
+
+1. Con el anticipo confirmado, **la orden de servicio se arma sola y sale con un clic**, y
+   queda el acuse del pueblo con fecha y hora.
+2. La comunidad puede corregir cantidades y el sistema lo refleja en la liquidación.
+3. Se elige **comunidad + rango de fechas** y salen todos los servicios a liquidar, con
+   método de pago, descuento y monto.
+4. Ese listado **se exporta a Excel** con la forma de su hoja actual, y se puede volver a
+   subir con correcciones.
+5. Un viaje que cambió sobre la marcha **liquida por lo que pasó**, no por lo que se vendió.
+6. **Cada comunidad entra con su usuario** y ve sus llegadas, su itinerario, lo que debe
+   preparar y **sus ingresos del mes por rubro** — y no ve nada de las otras.
+7. Una reserva desde el sitio **bloquea la fecha y el hospedaje** en el momento.
+8. El **anticipo del 20 % se cobra en línea** y confirma la reserva sola; el saldo queda
+   como cuota con fecha y método libre.
+9. Un pago de BBVA, WeTravel o PayPal **se concilia en el tablero**, con comprobante.
+10. Contabilidad factura con los **datos fiscales ya cargados**.
+11. La información de Monday está **dentro de la plataforma**.
+12. Cuatro capacitaciones dadas, manual entregado, **acta firmada**.
+
+---
+
+## 14. Checklist de validación de precios (fase A)
 
 **Antes de empezar**
 
-- [ ] Migraciones `20_enum_apartado.sql` y `21_plan_producto.sql` aplicadas en Supabase producción (en ese orden).
-- [ ] CSV de precios completado (plantilla abajo) subido en **Admin → Importar precios**.
-- [ ] En **Ventas → Paquetes**, paquete piloto con comedores e ítems liquidables con costo > 0 donde aplique.
+- [ ] `20_enum_apartado.sql` y `21_plan_producto.sql` aplicadas en producción, en ese orden.
+- [ ] CSV de precios y costos cargado en **Admin → Importar precios**.
+- [ ] Un paquete piloto con comedores e ítems liquidables con costo > 0 donde aplique.
 
 **Tres reservas de prueba**
 
 | # | Escenario | Qué revisar |
 |---:|---|---|
-| 1 | 4 pax, 2 días, efectivo | Liquidación comedores × 4; margen Banca |
-| 2 | 2 pax, WeTravel | Pago en Banca → Liquidación Cobros |
-| 3 | Pago mixto en comunidad | Reparto cuadra con precio total |
+| 1 | 4 pax, 2 días, efectivo | Comedores × 4; margen en Banca |
+| 2 | 2 pax, WeTravel | El pago aparece en Banca y en Liquidación → Cobros |
+| 3 | Pago mixto en comunidad | El reparto cuadra contra el precio total |
 
-**Criterios de aceptación Fase A**
+**Criterios de aceptación**
 
-- [ ] Sin conceptos liquidables en $0 sin justificación (paquete piloto).
-- [ ] `v_liquidacion_conceptos` con totales > 0 en salida piloto.
-- [ ] KPIs vendido/cobrado/por cobrar = pagos confirmados.
-- [ ] Rol comunidad ve su pueblo sin datos bancarios ajenos (RLS).
-
-**Plantilla CSV precios** (columnas `id,precio`; IDs `p01`…`p33`):
-
-```csv
-id,precio
-p01,0
-p02,0
-p03,0
-```
+- [ ] Ningún concepto liquidable en $0 sin justificación en el paquete piloto.
+- [ ] `v_liquidacion_conceptos` con totales > 0 en la salida piloto.
+- [ ] KPIs vendido / cobrado / por cobrar = pagos confirmados.
+- [ ] El rol comunidad ve su pueblo **y sólo su pueblo**, sin precio de venta.
 
 ---
 
-## 12. Migración Monday → Postgres (Fase K1)
-
-Matriz para import one-shot CSV exportado desde Monday.
-
-| Monday (Ventas ganadas) | Destino |
-|---|---|
-| Nombre cliente | `reservas.nombre` |
-| Estado | `reservas.status` — Reservado→Apartado/Planeación, Ganado→Confirmado, En viaje→En Curso |
-| Agente | `reservas.agente_id` |
-| Pax | `reservas.personas` |
-| Nacionalidad | `reservas.nacionalidad` |
-| Paquete | `reservas.paquete_id` (p01…p33) |
-| Archivo itinerario | Storage `expedientes` + `reserva_adjuntos` |
-| Fechas | `fecha_inicio`, `fecha_fin` |
-
-| Monday Leads | `leads` (nombre, email, teléfono, paquete_id, estado) |
-| Monday perdidas | `leads.estado = perdido` + `motivo_perdida` |
-| Cobros comunidad | `pagos` método Pago en comunidad |
-| Transportes | `reservas.transporte` + `v_transportes_salidas` |
-| Liquidaciones históricas | Solo referencia; operación nueva usa `v_liquidacion_*` |
-
----
-
-## 13. Definition of Done (27 sep 2026)
-
-1. Sitio + 10 micrositios con contenido acordado; apartado con cupo real.  
-2. Ventas sustituye Monday ganadas (idioma, tipo tour, anfitrión, estados admin).  
-3. Banca sustituye Trello (kanban + factura).  
-4. Quincena exportable validada vs Excel referencia.  
-5. Precios/costos reales cargados.  
-6. Histórico + gráfica ventas/mes.  
-7. Import Monday + 3 capacitaciones + estabilización acotada.  
-8. Manual PDF + acta firmada el **27 sep 2026**.
-
----
-
-## 14. Responsabilidades cooperativa vs desarrollo
-
-| Responsabilidad | Quién |
-|---|---|
-| Tarifas, costos comedores/servicios CSV | ESN / finanzas |
-| Textos y fotos 10 pueblos | ESN marketing |
-| Export CSV Monday + Excel quincena Amatlán referencia | ESN administración |
-| Usuario decisor y acceso Supabase prod | ESN |
-| Implementación técnica, despliegue, capacitación | Desarrollo |
-| Validación checklist precios | Finanzas + desarrollo |
-
----
-
-## 15. Riesgos y mitigación
-
-| Riesgo | Mitigación |
-|---|---|
-| Tarifas tardías | Hito 2 no cierra sin CSV precios |
-| Copy pueblos lento | 3 pueblos piloto al 16 ago; resto en paralelo cliente |
-| Finanzas sigue Excel | Fecha corte Monday acordada en kickoff 3 ago |
-| Scope WeTravel automático | Change request aparte |
-
----
-
-*Documento único — julio 2026. Proyecto: **116 h** total (**20** hechas + **96** pendientes). Inicio **3 ago 2026**, go-live **27 sep 2026**. OPEX **~USD 46–67/mes**.*
+*Anexo v8 — 31 de julio de 2026. Paquete único: **329 h · $40,000 MXN**, anticipo de $10,000
+más tres mensualidades de $10,000. Sin etapa 2: todo incluido.
+Arranque tentativo 17 ago 2026, cierre 15 nov 2026 (13 semanas a ~24 h/semana).
+Acuerdo de colaboración: `docs/acuerdo/acuerdo-colaboracion.html`.
+Operación: **$900–$1,500 MXN/mes**. Presentación: `docs/presentacion/propuesta-esn.html`.*

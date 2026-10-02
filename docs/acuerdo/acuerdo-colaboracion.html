@@ -1,0 +1,353 @@
+<meta charset="utf-8">
+<title>Acuerdo de colaboración — Expediciones Sierra Norte</title>
+
+<style>
+  :root {
+    --tinta: #17241D;
+    --tinta-2: #3D4F45;
+    --muted: #647569;
+    --line: #C9D6CD;
+    --line-soft: #E1E9E3;
+    --verde: #2E6B52;
+    --tint: #EAF2EC;
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, "Hoefler Text", "Times New Roman", serif;
+    --body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --tinta: #E8EFEA; --tinta-2: #C4D1C8; --muted: #93A69B;
+      --line: #35473C; --line-soft: #27352D; --verde: #62C29C; --tint: #1C3128;
+    }
+    body { background: #131C17; }
+  }
+  :root[data-theme="dark"] {
+    --tinta: #E8EFEA; --tinta-2: #C4D1C8; --muted: #93A69B;
+    --line: #35473C; --line-soft: #27352D; --verde: #62C29C; --tint: #1C3128;
+  }
+  :root[data-theme="dark"] body { background: #131C17; }
+  :root[data-theme="light"] {
+    --tinta: #17241D; --tinta-2: #3D4F45; --muted: #647569;
+    --line: #C9D6CD; --line-soft: #E1E9E3; --verde: #2E6B52; --tint: #EAF2EC;
+  }
+  :root[data-theme="light"] body { background: #FFFFFF; }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0 auto; padding: 40px 28px 80px; max-width: 46rem;
+    font-family: var(--body); font-size: 16px; line-height: 1.62;
+    color: var(--tinta); background: #fff;
+  }
+  @media (prefers-color-scheme: dark) { body { background: #131C17; } }
+
+  header.doc { border-bottom: 3px solid var(--verde); padding-bottom: 22px; margin-bottom: 8px; }
+  .rot { font-family: var(--mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--verde); }
+  h1 { font-family: var(--display); font-weight: 400; font-size: 34px; line-height: 1.15; margin: 10px 0 6px; letter-spacing: -.01em; }
+  header.doc .sub { color: var(--muted); font-size: 15px; }
+
+  h2 {
+    font-family: var(--body); font-size: 13px; font-weight: 700; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--verde);
+    margin: 34px 0 10px; padding-top: 16px; border-top: 1px solid var(--line-soft);
+  }
+  h2:first-of-type { border-top: 0; }
+  h3 { font-size: 15.5px; font-weight: 650; margin: 20px 0 6px; color: var(--tinta); }
+  p { margin: 0 0 12px; color: var(--tinta-2); }
+  p strong, li strong { color: var(--tinta); font-weight: 620; }
+
+  ol.clausulas { counter-reset: cl; list-style: none; padding: 0; margin: 0; }
+  ol.clausulas > li { counter-increment: cl; margin: 0 0 14px; padding-left: 34px; position: relative; color: var(--tinta-2); }
+  ol.clausulas > li::before {
+    content: counter(cl) "."; position: absolute; left: 0; top: 0;
+    font-family: var(--mono); font-size: 13px; color: var(--verde); font-weight: 600;
+  }
+
+  ul { padding-left: 20px; margin: 0 0 12px; }
+  li { margin-bottom: 7px; color: var(--tinta-2); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 15px; margin: 6px 0 16px; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  thead th {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); font-weight: 400; border-bottom: 1px solid var(--line);
+  }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); white-space: nowrap; }
+  tfoot td { font-weight: 700; border-top: 1px solid var(--line); border-bottom: 0; color: var(--tinta); }
+
+  .llenar {
+    display: inline-block; min-width: 200px; border-bottom: 1px solid var(--line);
+    color: var(--muted); font-family: var(--mono); font-size: 13.5px;
+  }
+  .caja { background: var(--tint); border-radius: 10px; padding: 16px 20px; margin: 0 0 16px; }
+  .caja p:last-child { margin-bottom: 0; }
+  .aviso {
+    border-left: 3px solid var(--verde); background: var(--tint); border-radius: 0 10px 10px 0;
+    padding: 14px 18px; margin: 26px 0 0; font-size: 15px;
+  }
+  .aviso p:last-child { margin-bottom: 0; }
+
+  .firmas { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 44px; }
+  .firma { padding-top: 60px; border-top: 1px solid var(--tinta); }
+  .firma b { display: block; font-size: 15px; font-weight: 650; color: var(--tinta); }
+  .firma span { display: block; font-size: 13.5px; color: var(--muted); margin-top: 3px; }
+  @media (max-width: 620px) { .firmas { grid-template-columns: 1fr; gap: 24px; } }
+
+  .pie { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line-soft); font-size: 13px; color: var(--muted); }
+
+  @media print {
+    @page { size: A4 portrait; margin: 18mm 16mm; }
+    body { max-width: none; padding: 0; font-size: 10.5pt; line-height: 1.5; color: #17241D; background: #fff; }
+    h1 { font-size: 22pt; }
+    h2 { font-size: 9.5pt; margin-top: 18pt; padding-top: 9pt; break-after: avoid; }
+    h3 { font-size: 11pt; break-after: avoid; }
+    table { font-size: 9.5pt; }
+    th, td { padding: 5pt 8pt; }
+    .caja, .aviso { break-inside: avoid; }
+    .firmas { break-inside: avoid; margin-top: 30pt; }
+    ol.clausulas > li { break-inside: avoid; }
+  }
+</style>
+
+<header class="doc">
+  <div class="rot">Acuerdo de colaboración</div>
+  <h1>Plataforma de gestión y sitios web<br>de Expediciones Sierra Norte</h1>
+  <p class="sub">Pueblos Mancomunados, Sierra Norte de Oaxaca · Versión para revisión, julio de 2026</p>
+</header>
+
+<div class="aviso" style="margin-top:22px">
+  <p><strong>Antes de firmar.</strong> Este documento está escrito en lenguaje claro para que
+  las dos partes lo entiendan sin abogado de por medio. <strong>No sustituye la revisión de un
+  abogado ni de un contador</strong>, sobre todo en la parte fiscal y en el régimen de la
+  contratación. Se recomienda que ambas partes lo revisen antes de firmarlo.</p>
+</div>
+
+<h2>1 · Quiénes firman</h2>
+
+<table>
+  <tbody>
+    <tr>
+      <td style="width:32%"><strong>La cooperativa</strong><br><span style="color:var(--muted);font-size:13.5px">«Sierra Norte»</span></td>
+      <td>
+        Razón social: <span class="llenar">&nbsp;</span><br>
+        RFC: <span class="llenar">&nbsp;</span><br>
+        Representante: <span class="llenar">&nbsp;</span><br>
+        Domicilio: <span class="llenar">&nbsp;</span><br>
+        Correo: <span class="llenar">&nbsp;</span>
+      </td>
+    </tr>
+    <tr>
+      <td><strong>El desarrollador</strong><br><span style="color:var(--muted);font-size:13.5px">«el desarrollador»</span></td>
+      <td>
+        Nombre: <span class="llenar">&nbsp;</span><br>
+        RFC: <span class="llenar">&nbsp;</span><br>
+        Domicilio: <span class="llenar">&nbsp;</span><br>
+        Correo: <span class="llenar">&nbsp;</span>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>2 · Qué se va a hacer</h2>
+
+<p>El desarrollador construye, pone en marcha y entrega a Sierra Norte una plataforma de
+gestión y un conjunto de sitios web, según el alcance de la cláusula 3. La propuesta en
+diapositivas de julio de 2026 forma parte de este acuerdo como anexo descriptivo; si hubiera
+diferencia entre aquélla y este documento, <strong>manda este documento</strong>.</p>
+
+<h2>3 · Qué incluye</h2>
+
+<h3>Los sitios públicos</h3>
+<ul>
+  <li>El sitio de <strong>Expediciones Sierra Norte</strong>, en español e inglés, con el catálogo de experiencias.</li>
+  <li>Un sitio propio de <strong>Pueblos Mancomunados</strong>.</li>
+  <li>Una página propia para <strong>cada uno de los ocho pueblos</strong>, con su identidad y sus experiencias.</li>
+  <li>Las diez páginas leen <strong>el mismo catálogo y el mismo calendario</strong>: una reserva hecha en cualquiera descuenta la disponibilidad en todas.</li>
+</ul>
+
+<h3>La plataforma de gestión (la administra Sierra Norte)</h3>
+<ul>
+  <li><strong>Motor de reservas</strong> con cupo por salida, inventario único de hospedaje, cierre manual de fechas y apartado de 72 horas.</li>
+  <li><strong>Cobro en línea del 20 % de anticipo</strong>, plan de pagos del saldo y registro de los cobros por otros medios, con conciliación asistida del estado de cuenta.</li>
+  <li><strong>Aviso automático por WhatsApp</strong> a cada comunidad al confirmarse el anticipo, con orden de servicio, acuse de recibido y recordatorios.</li>
+  <li><strong>Ajuste de los servicios realmente prestados</strong> cuando el viaje cambia sobre la marcha, con registro de quién lo cambió y por qué.</li>
+  <li><strong>Liquidación por comunidad y rango de fechas</strong>, con descuentos, método de pago, totales y exportación a Excel que se puede volver a cargar con correcciones.</li>
+  <li><strong>Acceso propio para cada comunidad</strong>: sus llegadas, su itinerario, lo que debe preparar y sus ingresos del mes por rubro.</li>
+  <li><strong>Datos fiscales del cliente y emisión de la factura</strong> (CFDI 4.0) desde la plataforma, mediante proveedor autorizado de certificación.</li>
+  <li><strong>Panel de impuestos de las ocho comunidades</strong>, por periodo, con calendario de obligaciones y expediente digital de comprobantes.</li>
+  <li><strong>Historial y reportes</strong> con gráficas de ventas por mes, por pueblo y por paquete.</li>
+  <li><strong>Agente de atención por WhatsApp</strong> que responde consultas, propone paquetes según disponibilidad real y aparta lugares, dejando el prospecto en el panel de ventas para que una persona lo confirme.</li>
+</ul>
+
+<h3>Puesta en marcha</h3>
+<ul>
+  <li>Migración de la información que hoy vive en Monday.</li>
+  <li>Manual de uso en español.</li>
+  <li><strong>Cuatro capacitaciones</strong>: ventas, finanzas y contabilidad, comunidades, y dirección.</li>
+  <li>Reuniones de seguimiento de una hora cada dos semanas.</li>
+  <li>Acompañamiento y corrección de fallas hasta la firma del acta de cierre.</li>
+</ul>
+
+<h2>4 · Qué no incluye</h2>
+
+<ol class="clausulas">
+  <li><strong>El contenido.</strong> Logos, fotografías, video y textos de los pueblos los aporta Sierra Norte.</li>
+  <li><strong>Las tarifas y costos.</strong> Los define Sierra Norte; el desarrollador sólo construye dónde se capturan y cómo se calculan.</li>
+  <li><strong>La validación fiscal.</strong> La plataforma lleva el control y prepara la determinación; <strong>quien la valida y la firma es el contador de Sierra Norte</strong>.</li>
+  <li><strong>Los servicios de terceros</strong> descritos en la cláusula 8, que Sierra Norte contrata y paga por su cuenta.</li>
+  <li><strong>Conexión directa con el banco</strong>, aplicación móvil instalable y arquitectura para varias cooperativas. Quedan fuera y se cotizarían aparte.</li>
+</ol>
+
+<h2>5 · Cuánto cuesta y cómo se paga</h2>
+
+<p>El precio total es de <strong>$40,000.00 MXN (cuarenta mil pesos 00/100 M.N.)</strong> por
+todo el alcance de la cláusula 3, sin módulos adicionales por cotizar después. El precio
+incluye las 20 horas ya invertidas y en producción al momento de firmar.</p>
+
+<table>
+  <thead>
+    <tr><th>Pago</th><th>Fecha</th><th>Contra qué se paga</th><th class="num">Monto</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Anticipo</td><td>Al firmar</td><td>Firma del acuerdo y arranque en producción</td><td class="num">$10,000</td></tr>
+    <tr><td>1</td><td>Fin del mes 1</td><td>Aviso automático por WhatsApp y liquidación por comunidad con su Excel</td><td class="num">$10,000</td></tr>
+    <tr><td>2</td><td>Fin del mes 2</td><td>Las diez páginas ligadas, el acceso de cada comunidad y el cobro en línea</td><td class="num">$10,000</td></tr>
+    <tr><td>3</td><td>Fin del mes 3</td><td>Agente de WhatsApp, factura timbrada, panel fiscal, capacitaciones y acta</td><td class="num">$10,000</td></tr>
+  </tbody>
+  <tfoot><tr><td colspan="3">Total</td><td class="num">$40,000</td></tr></tfoot>
+</table>
+
+<ol class="clausulas">
+  <li><strong>Se paga contra entrega verificable.</strong> Cada pago se libera cuando lo comprometido está funcionando y Sierra Norte lo puede ver en pantalla. <strong>Si algo no se entregó, ese pago no se cobra</strong> hasta que se entregue.</li>
+  <li><strong>Plazo de pago:</strong> 15 días naturales a partir de la aceptación de cada entrega.</li>
+  <li><strong>Forma de pago:</strong> transferencia a la cuenta que el desarrollador indique.</li>
+  <li><strong>Impuestos:</strong> el precio es <span class="llenar">&nbsp;</span> IVA. Las retenciones que correspondan se aplicarán según el régimen fiscal de las partes. <em>(A definir con el contador de cada parte antes de firmar.)</em></li>
+  <li><strong>Alternativa de pago:</strong> por acuerdo escrito, los cuatro pagos pueden reemplazarse por dos de $20,000, el primero al firmar y el segundo al fin del mes 2, sin cambio de precio ni de alcance.</li>
+</ol>
+
+<h2>6 · Cuándo</h2>
+
+<div class="caja">
+  <p><strong>Arranque tentativo: lunes 17 de agosto de 2026</strong>, sujeto a que Sierra Norte
+  confirme la colaboración y se firme este acuerdo. Si la confirmación llega después, todas
+  las fechas se recorren la misma cantidad de días.</p>
+</div>
+
+<table>
+  <thead><tr><th>Etapa</th><th>Fechas</th><th>Qué queda funcionando</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Mes 1</strong></td><td>17 ago – 20 sep 2026</td><td>Aviso automático por WhatsApp al pueblo y liquidación en un botón con su Excel</td></tr>
+    <tr><td><strong>Mes 2</strong></td><td>21 sep – 18 oct 2026</td><td>Las diez páginas ligadas, el acceso de cada comunidad y el cobro en línea</td></tr>
+    <tr><td><strong>Mes 3</strong></td><td>19 oct – 15 nov 2026</td><td>Agente de WhatsApp, factura timbrada, panel fiscal, historial y capacitaciones</td></tr>
+    <tr><td><strong>Cierre</strong></td><td>domingo 15 nov 2026</td><td>Acta de aceptación firmada</td></tr>
+  </tbody>
+</table>
+
+<p><strong>Ajuste de calendario acordado desde ahora.</strong> Si el ritmo de trabajo no se
+sostiene o si Sierra Norte se retrasa en entregar lo de la cláusula 7, el calendario se
+recorre hasta <strong>18 semanas</strong>, cerrando a más tardar el <strong>27 de diciembre de
+2026</strong>, <strong>sin cambio de precio ni de alcance</strong>. Este ajuste se acuerda por
+escrito entre las partes y no se considera incumplimiento.</p>
+
+<h2>7 · Qué aporta Sierra Norte</h2>
+
+<p>El proyecto depende de estos insumos. <strong>Si no llegan, el calendario se recorre</strong>
+conforme a la cláusula 6.</p>
+
+<ol class="clausulas">
+  <li><strong>Una persona que decide</strong>, con autoridad para aprobar entregas, disponible una hora cada dos semanas.</li>
+  <li><strong>Las tarifas y costos reales</strong> de comidas, senderos, hospedajes, talleres, transportes y anfitriones, en el taller de la primera semana.</li>
+  <li><strong>Los logos</strong> de Expediciones Sierra Norte, de Pueblos Mancomunados y de cada uno de los ocho pueblos, en buena calidad.</li>
+  <li><strong>Fotografías, video y textos</strong> propios de cada pueblo para su página.</li>
+  <li><strong>Cuáles son exactamente las ocho comunidades</strong> con gestión fiscal, con su RFC y su régimen, y el contacto de WhatsApp de cada una.</li>
+  <li><strong>Una quincena ya cerrada en Excel</strong>, para comprobar que la plataforma da el mismo resultado.</li>
+  <li><strong>Las cuentas a su nombre:</strong> la de cobro en línea, la de WhatsApp Business y la del proveedor de facturación. El trámite de alta puede tardar semanas y <strong>conviene iniciarlo la primera semana</strong>.</li>
+  <li><strong>Accesos</strong> a la base de datos de producción y la exportación de la información de Monday.</li>
+  <li><strong>La decisión sobre qué ve cada comunidad.</strong> Hoy el sistema está configurado para que todo el equipo vea toda la operación; dar acceso propio a cada pueblo requiere cambiar esa regla. <strong>Es una decisión de la cooperativa</strong> y debe tomarse en la reunión de arranque.</li>
+</ol>
+
+<h2>8 · Servicios de terceros y costos mensuales</h2>
+
+<p>La plataforma se apoya en servicios que <strong>Sierra Norte contrata y paga
+directamente</strong>, a su nombre. No están incluidos en los $40,000.</p>
+
+<table>
+  <thead><tr><th>Servicio</th><th>Para qué</th><th class="num">Aproximado</th></tr></thead>
+  <tbody>
+    <tr><td>Servidor y base de datos</td><td>Tener la plataforma y los sitios en línea, con respaldos</td><td class="num">$900 – $1,500 / mes</td></tr>
+    <tr><td>Dominios</td><td>Las direcciones propias de cada sitio</td><td class="num">según cuántos</td></tr>
+    <tr><td>Mensajes de WhatsApp</td><td>Los avisos automáticos a las comunidades</td><td class="num">por mensaje</td></tr>
+    <tr><td>Inteligencia artificial</td><td>El agente que atiende por WhatsApp</td><td class="num">$300 – $800 / mes</td></tr>
+    <tr><td>Timbrado de facturas</td><td>Emitir cada CFDI</td><td class="num">por timbre</td></tr>
+    <tr><td>Comisiones de cobro</td><td>Sólo cuando entra dinero; salen del precio del paquete</td><td class="num">variable</td></tr>
+  </tbody>
+</table>
+
+<p>Las cifras son de referencia a julio de 2026 y las fija cada proveedor, no el desarrollador.</p>
+
+<h2>9 · De quién es lo que se construye</h2>
+
+<ol class="clausulas">
+  <li><strong>La información es de Sierra Norte</strong> desde el primer día: reservas, clientes, pagos, liquidaciones y todo lo que se capture.</li>
+  <li><strong>El código fuente es de Sierra Norte</strong> una vez pagado el precio completo. Se entrega en el repositorio que la cooperativa indique.</li>
+  <li>El desarrollador conserva el derecho de <strong>mencionar el proyecto en su portafolio</strong>, sin divulgar datos de clientes, cifras de operación ni información de las comunidades.</li>
+  <li>No hay renta por usuario ni licencia que renovar: <strong>la plataforma no se le alquila a Sierra Norte, es suya</strong>.</li>
+</ol>
+
+<h2>10 · Confidencialidad y datos personales</h2>
+
+<ol class="clausulas">
+  <li>El desarrollador guarda confidencialidad sobre la información de la operación, de los clientes y de las comunidades, durante el proyecto y después de él.</li>
+  <li>Los datos personales de viajeros y de integrantes de las comunidades se tratan <strong>únicamente para operar la plataforma</strong>. Sierra Norte es la responsable del tratamiento y le corresponde publicar su aviso de privacidad conforme a la ley mexicana en la materia.</li>
+  <li>El desarrollador no comparte ni vende esa información a terceros, salvo los proveedores de la cláusula 8 estrictamente necesarios para que la plataforma funcione.</li>
+</ol>
+
+<h2>11 · Cambios de alcance</h2>
+
+<ol class="clausulas">
+  <li>Todo lo que no esté en la cláusula 3 se considera <strong>alcance nuevo</strong>.</li>
+  <li>Antes de hacerlo, el desarrollador entrega por escrito <strong>las horas y el precio</strong>; se ejecuta sólo con la aprobación escrita de Sierra Norte.</li>
+  <li>Ningún cambio de alcance se hace en silencio ni se cobra sin autorización previa.</li>
+</ol>
+
+<h2>12 · Garantía y soporte</h2>
+
+<ol class="clausulas">
+  <li><strong>Corrección de fallas sin costo durante 60 días naturales</strong> a partir de la firma del acta de cierre, siempre que se trate de algo que no funciona conforme a lo entregado.</li>
+  <li>No cubre alcance nuevo, cambios pedidos después, ni fallas causadas por terceros o por cambios hechos por Sierra Norte.</li>
+  <li><strong>Soporte posterior, opcional:</strong> $1,100 al mes por 6 horas, o $1,900 al mes por 10 horas en temporada alta. Se contrata por separado y se cancela cuando Sierra Norte lo decida.</li>
+</ol>
+
+<h2>13 · Si algo sale mal</h2>
+
+<ol class="clausulas">
+  <li><strong>Sierra Norte puede terminar</strong> el acuerdo por escrito en cualquier momento. Paga lo entregado y aceptado hasta esa fecha, y recibe el código y la información en el estado en que estén.</li>
+  <li><strong>El desarrollador puede terminar</strong> el acuerdo si un pago se retrasa más de 30 días naturales, o si los insumos de la cláusula 7 no llegan y el proyecto queda detenido más de 45 días naturales.</li>
+  <li>Las partes se comprometen a <strong>hablarlo primero</strong>: cualquier desacuerdo se trata de buena fe en una reunión antes de tomar cualquier otra vía.</li>
+  <li>Si no hay acuerdo, se someten a las leyes y tribunales de <span class="llenar">&nbsp;</span>, renunciando a cualquier otro fuero.</li>
+</ol>
+
+<h2>14 · Lo que las dos partes entienden</h2>
+
+<ol class="clausulas">
+  <li>Este acuerdo, junto con la propuesta en diapositivas de julio de 2026, es <strong>todo lo pactado</strong>. Lo que se haya hablado antes y no esté aquí, no obliga.</li>
+  <li>Cualquier modificación debe ser <strong>por escrito y firmada por ambas partes</strong>.</li>
+  <li>Este acuerdo no crea relación laboral, sociedad ni representación entre las partes: el desarrollador presta un servicio profesional independiente.</li>
+  <li>Las partes declaran que <strong>leyeron y entendieron</strong> este documento, y que lo firman sin error, dolo ni presión.</li>
+</ol>
+
+<div class="firmas">
+  <div class="firma">
+    <b>Por Expediciones Sierra Norte</b>
+    <span>Nombre y cargo</span>
+    <span>Fecha:</span>
+  </div>
+  <div class="firma">
+    <b>El desarrollador</b>
+    <span>Nombre</span>
+    <span>Fecha:</span>
+  </div>
+</div>
+
+<p class="pie">Documento preparado en julio de 2026 · Lugar de firma:
+<span class="llenar">&nbsp;</span> · Se firman dos ejemplares, uno para cada parte.</p>
